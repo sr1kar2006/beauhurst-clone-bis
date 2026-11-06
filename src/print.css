@@ -1,0 +1,9 @@
+@media print {
+  [data-app-header], [data-app-footer], .no-print, [data-section-nav], [data-tour-tooltip], [data-tour-beacon] { display: none !important; }
+  .fixed { display: none !important; }
+  [data-company-header] { position: static !important; border: 0 !important; }
+  body, html { background: #fff !important; }
+  .print-section { break-before: page; }
+  .print-section:first-child { break-before: auto; }
+  section { break-inside: avoid; }
+}

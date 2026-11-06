@@ -1,0 +1,6 @@
+node_modules
+dist
+.venv
+e2e-shots
+test-results
+playwright-report
