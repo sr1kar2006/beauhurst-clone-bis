@@ -78,3 +78,4 @@ No reference screenshots were provided (`./reference/` does not exist), so every
 - **Filing PDFs** are placeholder documents generated with jsPDF.
 - **Map tiles** come from OpenStreetMap and need network access.
 - **Bundle**: ECharts and Leaflet are lazy-loaded with their tabs. The main chunk (~770 kB, mostly the faker locale) still triggers Vite's 500 kB warning.
+# beauhurst-clone-bis
