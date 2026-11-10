@@ -1,4 +1,4 @@
-export const BRAND_NAME = 'Northbeam';
+export const BRAND_NAME = 'Beam';
 export const USER_NAME = 'Simone';
 export const HEADLINE_TOTAL = 13_996_566;
 export const DATA_SEED = 20241;

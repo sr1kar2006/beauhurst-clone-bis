@@ -13,7 +13,7 @@ import { countryName } from '../../data/countries/iso3166';
 import { profilePath } from '../../lib/nav';
 import { formatDate, formatInt } from '../../lib/format';
 import { currencySymbol, fxPerGbp } from '../../lib/money';
-import { TENDER } from '../../config';
+import { BRAND_NAME, TENDER } from '../../config';
 import { downloadBlob, toCsv } from '../../lib/download';
 import { buildRows, bestWorst, entries, FIN_METRICS, isDifferent, periodNote, type Cell, type Kind, type Row } from '../../compare/model';
 import { exportComparison } from './exportComparison';
@@ -97,7 +97,7 @@ export default function ComparePage() {
         </div>
       ) : undefined}
     >
-      {saved && <p role="status" className="mb-[10px] text-[14px] text-[#1E6B34]">Saved as “{saved}”. Find it under <Link to="/comparisons" className="text-primary underline">My Northbeam → Comparisons</Link>.</p>}
+      {saved && <p role="status" className="mb-[10px] text-[14px] text-[#1E6B34]">Saved as “{saved}”. Find it under <Link to="/comparisons" className="text-primary underline">My Beam → Comparisons</Link>.</p>}
       {!es.length ? (
         <Panel><div className="text-center py-[30px] text-text"><p className="text-[16px] text-ink mb-[10px]">Pick up to {MAX_COMPARE} companies to compare, from any country.</p><AddCompany ids={ids} onAdd={(id) => setIds([...ids, id])} /></div></Panel>
       ) : (
@@ -221,7 +221,7 @@ export function ComparisonsPage() {
   const del = useCompare((s) => s.deleteSaved);
   const ids = useCompare((s) => s.ids);
   return (
-    <PageShell title="Comparisons" crumbs={[{ label: 'Home', to: '/' }, { label: `My ${'Northbeam'}` }, { label: 'Comparisons' }]} actions={<Link to={comparePath(ids)} className={btnPrimary}>New comparison</Link>}>
+    <PageShell title="Comparisons" crumbs={[{ label: 'Home', to: '/' }, { label: `My ${BRAND_NAME}` }, { label: 'Comparisons' }]} actions={<Link to={comparePath(ids)} className={btnPrimary}>New comparison</Link>}>
       <Panel bodyClass="">
         <ul data-saved-comparisons>
           {saved.map((s) => (

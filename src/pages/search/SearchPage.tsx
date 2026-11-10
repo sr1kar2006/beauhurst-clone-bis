@@ -30,11 +30,11 @@ export function SearchPage() {
     <>
       <div className="max-w-content mx-auto px-5">
         <Breadcrumb />
-        <div className="flex items-center gap-6 mt-[10px] mb-[22px]">
-          <h1 className="text-[28px] font-light text-ink leading-tight whitespace-nowrap">Advanced search</h1>
-          <div className="flex-1 flex justify-center min-w-0"><GlobalSearch /></div>
+        <div className="flex items-end justify-between gap-6 mt-[14px]">
+          <h1 className="text-[44px] font-light text-ink leading-[1.1] tracking-[-0.01em] whitespace-nowrap">Advanced search</h1>
           <PageActions />
         </div>
+        <div className="mt-[16px] mb-[24px]"><GlobalSearch wide /></div>
         <QueryBuilder />
         {!hasSearched && <EmptyState />}
       </div>

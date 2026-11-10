@@ -7,15 +7,14 @@ import { useAuth, useCurrentUser } from '../../auth/authStore';
 import { useAdminMenuItems } from '../../auth/guards';
 import { ChevronRight, Grip } from 'lucide-react';
 import { BRAND_NAME } from '../../config';
+import { BeamLogo } from './BeamLogo';
 import { Popover } from '../ui/Popover';
 import { useIsOpen, useUi } from '../../store/uiStore';
 
 export function BrandMark() {
   return (
     <span className="inline-flex items-center gap-2 select-none" aria-label={BRAND_NAME}>
-      <span className="w-[26px] h-[26px] bg-ink text-white flex items-center justify-center font-serif text-[16px] font-bold leading-none rounded-[2px]">
-        {BRAND_NAME[0]}
-      </span>
+      <BeamLogo size={26} />
       <span className="font-serif text-[22px] text-ink leading-none tracking-[-0.01em]">{BRAND_NAME}</span>
     </span>
   );

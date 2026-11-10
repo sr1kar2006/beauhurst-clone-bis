@@ -40,7 +40,7 @@ const sheetName = (s: string) => s.replace(/[\\/?*[\]:]/g, ' ').slice(0, 31);
 export async function buildXlsx(spec: ExportSpec): Promise<Blob> {
   const ExcelJS = (await import('exceljs')).default;
   const wb = new ExcelJS.Workbook();
-  wb.creator = spec.author ?? 'Northbeam prototype';
+  wb.creator = spec.author ?? 'Beam prototype';
   wb.created = new Date();
   const header = { font: { bold: true, color: { argb: 'FFFFFFFF' } }, fill: { type: 'pattern' as const, pattern: 'solid' as const, fgColor: { argb: 'FF4B4291' } } };
 

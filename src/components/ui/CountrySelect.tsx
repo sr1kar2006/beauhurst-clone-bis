@@ -98,7 +98,7 @@ export function CountrySelect({ mode, value, onChange, allowAll = mode === 'mult
         className={`inline-flex items-center gap-[6px] bg-white border border-border rounded-btn px-2 ${h} text-ink hover:border-[#c8c8c8] max-w-[280px] ${className}`}
       >
         {value.length === 1 && first ? <span aria-hidden>{first.flag}</span> : <Globe size={14} className="text-text shrink-0" aria-hidden />}
-        {compact ? (value.length > 1 && <span className="text-[12px] font-semibold">{value.length}</span>) : <span className="truncate">{summary}</span>}
+        {compact ? (value.length > 1 && <span className="text-[12px] font-semibold">{value.length}</span>) : <span className="truncate flex-1 text-left">{summary}</span>}
         <ChevronDown size={14} className="text-text shrink-0" aria-hidden />
       </button>
       <Popover id={id} anchor={anchor} width={320} caret={false} tourKey={tourKey ? `${tourKey}-popover` : undefined}>

@@ -1,4 +1,4 @@
-# Northbeam: Company Intelligence Platform Clone
+# Beam: Company Intelligence Platform Clone
 
 A front-end clone of a UK company-intelligence platform. It runs entirely in the browser on generated dummy data, with no backend.
 
@@ -9,7 +9,7 @@ It has two modes:
 
 A data-driven guided-tour engine covers both modes.
 
-"Northbeam" is a placeholder brand. Every company, person, investor, email address, address and news headline in the data is **fictional**.
+"Beam" is a placeholder brand. Every company, person, investor, email address, address and news headline in the data is **fictional**.
 
 ---
 
@@ -175,7 +175,7 @@ These parts are global and appear on every route:
 
 - **AppHeader**: sticky at the top on every page. It holds:
   - the logo, which links home
-  - the nav menus: *My Northbeam*, *Search*, *News & Reports* and **Company profile**. The Company profile menu lists the Lumen Bank demo plus up to five recently viewed profiles.
+  - the nav menus: *My Beam*, *Search*, *News & Reports* and **Company profile**. The Company profile menu lists the Lumen Bank demo plus up to five recently viewed profiles.
   - Help, What's New, the user name and the apps grid
 - **Global company search** (typeahead): sits in the "Advanced search" title row on the search page, and in the breadcrumb row on profile pages. Picking a result opens that company's profile.
 - **Footer** and **FloatingHelp**: the yellow "Platform tours" pill with an *n / 3* badge and a menu of tours, plus the purple "Need help?" button.

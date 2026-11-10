@@ -10,7 +10,8 @@ import { countryName } from '../../data/countries/iso3166';
 
 const ID = 'global-search';
 
-export function GlobalSearch() {
+/** `wide`: full-width row on the search page (search 70%, country scope 30%). */
+export function GlobalSearch({ wide = false }: { wide?: boolean }) {
   const [term, setTerm] = useState('');
   const [scope, setScope] = useState<string[]>([]);
   const [el, setEl] = useState<HTMLDivElement | null>(null);
@@ -30,20 +31,26 @@ export function GlobalSearch() {
     return out;
   }, [term, scope]);
 
+  const scopeSelect = (
+    <CountrySelect
+      mode="multi" value={scope} onChange={setScope} label="Search scope" size="md" compact={!wide} tourKey="global-search-scope"
+      className={wide ? '!h-[44px] w-full !max-w-none !px-3 text-[15px]' : ''}
+    />
+  );
   return (
-    <div className="flex items-center gap-[6px] max-w-full">
-    <CountrySelect mode="multi" value={scope} onChange={setScope} label="Search scope" size="md" compact tourKey="global-search-scope" />
-    <div ref={setEl} className="relative w-[280px] max-w-full">
+    <div className={wide ? 'flex items-center gap-[12px] w-full' : 'flex items-center gap-[6px] max-w-full'} data-global-search>
+    {!wide && scopeSelect}
+    <div ref={setEl} className={wide ? 'relative basis-[70%] min-w-0' : 'relative w-[280px] max-w-full'}>
       <input
         value={term}
         onChange={(e) => { setTerm(e.target.value); e.target.value.trim().length >= 2 ? open(ID) : close(ID); }}
         onFocus={() => term.trim().length >= 2 && open(ID)}
-        placeholder="Search companies"
+        placeholder={wide ? 'Search companies by name' : 'Search companies'}
         aria-label="Search companies"
-        className="w-full h-[32px] border border-border rounded-btn pl-3 pr-9 text-[14px] text-ink placeholder:text-muted focus:outline-none focus:border-primary"
+        className={`w-full border border-border rounded-btn text-ink placeholder:text-muted focus:outline-none focus:border-primary ${wide ? 'h-[44px] pl-[42px] pr-3 text-[16px] shadow-[0_1px_2px_rgba(0,0,0,0.04)]' : 'h-[32px] pl-3 pr-9 text-[14px]'}`}
       />
-      <Search size={16} className="absolute right-[10px] top-[8px] text-ink pointer-events-none" />
-      <Popover id={ID} anchor={el} width={300} caret={false} className="py-1">
+      <Search size={wide ? 18 : 16} className={`absolute text-ink pointer-events-none ${wide ? 'left-[14px] top-[13px]' : 'right-[10px] top-[8px]'}`} />
+      <Popover id={ID} anchor={el} width={wide ? (el?.offsetWidth ?? 300) : 300} caret={false} className="py-1">
         {matches.length === 0 ? (
           <div className="px-3 py-2 text-[14px] text-muted">No companies match “{term}”</div>
         ) : (
@@ -61,6 +68,7 @@ export function GlobalSearch() {
         )}
       </Popover>
     </div>
+    {wide && <div className="basis-[30%] min-w-0 flex">{scopeSelect}</div>}
     </div>
   );
 }

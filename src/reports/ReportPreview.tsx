@@ -3,6 +3,7 @@ import type { Company } from '../data/types';
 import type { Report } from './model';
 import type { Rendered } from './render';
 import { BRAND_NAME, PROTOTYPE_NOTICE } from '../config';
+import { BeamLogo } from '../components/chrome/BeamLogo';
 import { SOURCE_BY_ID } from '../data/sources';
 import { countryName } from '../data/countries/iso3166';
 import { cellText } from '../export/pdf';
@@ -17,7 +18,7 @@ export function ReportPreview({ report, rendered, companies }: { report: Report;
       {report.cover && (
         <div className="bg-primary text-white px-[36px] py-[34px]" data-report-cover>
           <div className="flex items-center gap-[10px] text-[13px]">
-            {report.logo && <span className="w-[26px] h-[26px] bg-white text-primary font-serif font-bold flex items-center justify-center rounded-[2px]">{BRAND_NAME[0]}</span>}
+            {report.logo && <BeamLogo size={26} inverted className="text-primary" />}
             {BRAND_NAME}
           </div>
           <h2 className="text-[28px] font-light mt-[14px]">{report.title}</h2>

@@ -61,7 +61,7 @@ test('no hardcoded deployment domain in src', () => {
     if (statSync(p).isDirectory()) return walk(p);
     if (!/\.(ts|tsx)$/.test(f)) return;
     const s = readFileSync(p, 'utf8');
-    if (/https?:\/\/(localhost|[a-z0-9-]+\.(netlify|vercel)\.app|northbeam\.)/i.test(s)) offenders.push(p);
+    if (/https?:\/\/(localhost|[a-z0-9-]+\.(netlify|vercel)\.app|(north)?beam\.)/i.test(s)) offenders.push(p);
   });
   walk('src');
   expect(offenders).toEqual([]);

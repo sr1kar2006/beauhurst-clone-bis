@@ -22,6 +22,18 @@ export function cellText(c: ExportColumn, v: unknown): string {
   }
 }
 
+/** Beam logo mark (light source and beam) drawn as vectors; mirrors components/chrome/BeamLogo.tsx. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function drawBeamMark(doc: any, x: number, y: number, size: number, bg: [number, number, number]) {
+  const k = size / 26, X = (u: number) => x + u * k, Y = (v: number) => y + v * k;
+  doc.setFillColor(255); doc.roundedRect(x, y, size, size, 0.8, 0.8, 'F');
+  doc.setFillColor(bg[0] + (255 - bg[0]) * 0.65, bg[1] + (255 - bg[1]) * 0.65, bg[2] + (255 - bg[2]) * 0.65);
+  doc.triangle(X(8), Y(13), X(23), Y(5.5), X(23), Y(20.5), 'F');
+  doc.setFillColor(...bg);
+  doc.triangle(X(8), Y(13), X(23), Y(9.5), X(23), Y(16.5), 'F');
+  doc.circle(X(7.5), Y(13), 3.2 * k, 'F');
+}
+
 export async function buildPdf(spec: ExportSpec): Promise<Blob> {
   const { jsPDF } = await import('jspdf');
   const autoTable = (await import('jspdf-autotable')).default;
@@ -34,7 +46,8 @@ export async function buildPdf(spec: ExportSpec): Promise<Blob> {
   if (spec.cover !== false) {
     doc.setFillColor(...purple); doc.rect(0, 0, W, 60, 'F');
     if (spec.logoDataUrl) { try { doc.addImage(spec.logoDataUrl, 'PNG', 16, 14, 18, 18); } catch { /* ignore bad logo */ } }
-    doc.setTextColor(255); doc.setFontSize(12); doc.text(BRAND_NAME, spec.logoDataUrl ? 40 : 16, 26);
+    else drawBeamMark(doc, 16, 19.5, 10, purple);
+    doc.setTextColor(255); doc.setFontSize(12); doc.text(BRAND_NAME, spec.logoDataUrl ? 40 : 30, 26);
     doc.setFontSize(24); doc.text(doc.splitTextToSize(spec.title, W - 32), 16, 46);
     doc.setTextColor(40); doc.setFontSize(13);
     let y = 78;

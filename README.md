@@ -1,4 +1,4 @@
-# Northbeam Advanced Search (front-end clone)
+# Beam Advanced Search (front-end clone)
 
 A working front-end clone of a UK company-intelligence "Advanced Search" page. It includes the query builder, results table, statistics dashboard and guided tour. It runs entirely in the browser on 5,000 seeded, fictional companies. There is no backend.
 
