@@ -31,7 +31,7 @@ test('entry points: navbar item and the results "Profile" button open the right 
   await page.goBack();
   await expect(page.locator(t('results-summary'))).toBeVisible();
   await page.locator('[data-company-link]').nth(1).click();
-  await expect(page).toHaveURL(/\/companies\/c\d+/);
+  await expect(page).toHaveURL(/\/companies\/[a-z]+-?\d+/);
   expect(errors).toEqual([]);
 });
 
@@ -101,7 +101,7 @@ test('section interactions: timeline, ownership, tree, filings, similar', async 
   await page.getByRole('button', { name: 'View remaining 252 shareholders in this class' }).click();
   await expect(page.getByRole('button', { name: /View remaining 252/ })).toHaveCount(0);
   await page.getByText('Show changes from last filing').click();
-  await expect(page.locator('th', { hasText: 'Change' })).toBeVisible();
+  await expect(page.locator('th', { hasText: 'Change' }).last()).toBeVisible();
   await expect(page.getByText('New', { exact: true }).first()).toBeVisible();
 
   // corporate tree: group demo collapses
@@ -132,7 +132,7 @@ test('section interactions: timeline, ownership, tree, filings, similar', async 
   await expect(page.getByText('Showing 20 similar companies.')).toBeVisible();
   // financial statements download
   await page.goto('/companies/lumen-bank/financials');
-  const [dl] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Download financial statements' }).click()]);
+  const [dl] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: /Download all \d+ years/ }).click()]);
   expect(dl.suggestedFilename()).toContain('financial-statements');
   expect(errors).toEqual([]);
 });

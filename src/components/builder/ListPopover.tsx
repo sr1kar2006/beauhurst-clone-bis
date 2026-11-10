@@ -51,8 +51,8 @@ export function ListPopover({ id, anchor, def, value, onConfirm }: Props) {
         />
       </div>
       <div className="max-h-[250px] overflow-y-auto nb-scroll border-y border-border">
-        {shown.map((o) => (
-          <div key={o.id} className="px-[14px] py-[5px] hover:bg-[#F3F3F3]">
+        {shown.map((o, i) => (
+          <div key={o.id} className={`px-[14px] py-[5px] hover:bg-[#F3F3F3] ${def.dividerAfter && !filter && i === def.dividerAfter ? 'border-t border-border' : ''}`}>
             <Checkbox checked={sel.includes(o.id)} onChange={(on) => toggle(o.id, on)} className="text-[14px] text-ink w-full" tourKey={`list-item-${slug(o.id)}`}>
               <Highlight text={o.label} term={filter} />
               {o.hint && <span className="text-muted ml-1">({o.hint})</span>}

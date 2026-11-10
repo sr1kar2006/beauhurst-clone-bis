@@ -4,7 +4,7 @@
 
 html, body { background: #F8F8F8; }
 body {
-  font-family: 'Public Sans', system-ui, sans-serif;
+  font-family: 'Twemoji Country Flags', 'Public Sans', system-ui, sans-serif;
   font-size: 15px;
   color: #595959;
   -webkit-font-smoothing: antialiased;
@@ -25,4 +25,10 @@ body {
 
 mark.nb-hl { background: #FCEFA1; color: inherit; padding: 0; }
 
-.leaflet-container { font-family: 'Public Sans', system-ui, sans-serif; }
+.leaflet-container { font-family: 'Twemoji Country Flags', 'Public Sans', system-ui, sans-serif; }
+
+/* WCAG 2.2: visible focus everywhere, and respect reduced motion (beacon pulse, transitions, smooth scroll) */
+:focus-visible { outline: 2px solid #4B4291; outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; scroll-behavior: auto !important; }
+}

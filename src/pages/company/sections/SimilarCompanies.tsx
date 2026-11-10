@@ -1,3 +1,4 @@
+import { CompareToggle } from '../../../components/compare/CompareTray';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ListPlus, Sheet } from 'lucide-react';
@@ -55,7 +56,7 @@ export function SimilarCompanies({ c }: SectionProps) {
       </div>
       <div className="bg-surface border border-card-border rounded-card" data-tour="similar-table">
         <div className="grid grid-cols-[36px_minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,1fr)_170px] gap-x-[14px] items-center px-[14px] py-[9px] border-b border-card-border text-[14px] font-semibold text-ink">
-          <Checkbox checked={allOn ? 'on' : sel.length ? 'mixed' : 'off'} onChange={(on) => setSel(on ? rows.map((r) => r.id) : [])} />
+          <Checkbox checked={allOn ? 'on' : sel.length ? 'mixed' : 'off'} onChange={(on) => setSel(on ? rows.map((r) => r.id) : [])} ariaLabel="Select all similar companies" />
           <span>Name</span><span>Industries</span><span>Buzzwords</span><span />
         </div>
         {rows.map((r) => {
@@ -63,7 +64,7 @@ export function SimilarCompanies({ c }: SectionProps) {
           const ind = label(r.industries);
           return (
             <div key={r.id} className="grid grid-cols-[36px_minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,1fr)_170px] gap-x-[14px] px-[14px] py-[10px] border-b border-card-border last:border-0 hover:bg-[#FAFAFA]">
-              <span className="pt-[10px]"><Checkbox checked={sel.includes(r.id)} onChange={(on) => setSel((s) => (on ? [...s, r.id] : s.filter((x) => x !== r.id)))} /></span>
+              <span className="pt-[10px]"><Checkbox checked={sel.includes(r.id)} onChange={(on) => setSel((s) => (on ? [...s, r.id] : s.filter((x) => x !== r.id)))} ariaLabel={`Select ${r.name}`} /></span>
               <Link to={profilePath(r.id)} className="flex items-center gap-[10px] min-w-0">
                 <img src={r.logo} alt="" className="w-[36px] h-[36px] border border-border rounded-[3px] shrink-0" />
                 <span className="font-semibold text-ink hover:text-primary hover:underline truncate">{r.name}</span>
@@ -74,6 +75,7 @@ export function SimilarCompanies({ c }: SectionProps) {
                 <button onClick={() => addToCollection([r.id])} className={`inline-flex items-center gap-[5px] h-[30px] px-[10px] border border-primary rounded-btn text-[13px] font-semibold text-primary ${inCols ? 'bg-collections-btn' : 'bg-white hover:bg-primary-light'}`}>
                   <ListPlus size={15} />{inCols ? `In ${inCols} collection${inCols > 1 ? 's' : ''}` : 'Add to collection'}
                 </button>
+                <CompareToggle id={r.id} label="Add to compare" className="!h-[26px] !px-[8px] !text-[12px]" />
                 <button onClick={() => notSimilar(r.id, r.name)} className="text-[13px] text-primary hover:underline">Not similar</button>
               </div>
               <div className="col-start-2 col-span-3 min-w-0">

@@ -1,3 +1,4 @@
+import { countryName, flagOf } from '../../../data/countries/iso3166';
 import { useMemo, useRef, useState } from 'react';
 import { hierarchy, tree } from 'd3-hierarchy';
 import { ChevronDown, ChevronUp } from 'lucide-react';
@@ -25,7 +26,9 @@ export function CorporateStructure({ p }: SectionProps) {
     <>
       <tr className="border-b border-card-border">
         <td className="py-[7px] pr-2" style={{ paddingLeft: depth * 18 }}>
+          <span className="mr-[5px]" aria-label={n.country}>{flagOf(n.country)}</span>
           {n.companyId ? <a href={profilePath(n.companyId)} className="text-primary hover:underline">{n.registeredName}</a> : <a href="#" onClick={(e) => e.preventDefault()} className="text-primary hover:underline">{n.registeredName}</a>}
+          {n.pct != null && <span className="ml-[6px] text-[12px] text-text" data-edge-pct>({n.pct}% held)</span>}
         </td>
         <td className="py-[7px] text-ink">{n.consolidated ? 'Yes' : 'No'}</td>
       </tr>
@@ -100,10 +103,13 @@ function TreeDiagram({ root, collapsed, toggle }: { root: CorpNode; collapsed: S
       onPointerMove={(e) => { if (!drag.current) return; box.current!.scrollLeft = drag.current.sl - (e.clientX - drag.current.x); box.current!.scrollTop = drag.current.st - (e.clientY - drag.current.y); }}
       onPointerUp={() => { drag.current = null; }}
     >
-      <svg width={layout.width} height={layout.height} role="img" aria-label="Corporate structure diagram">
+      <svg width={layout.width} height={layout.height} role="group" aria-label="Corporate structure diagram">
         <g transform={`translate(${layout.offX} 50)`}>
           {layout.links.map((l) => (
-            <path key={l.target.data.id} d={`M${l.source.x},${l.source.y! + 12} V${(l.source.y! + l.target.y!) / 2 + 10} H${l.target.x} V${l.target.y! - 24}`} fill="none" stroke="#BDBDBD" />
+            <g key={l.target.data.id}>
+              <path d={`M${l.source.x},${l.source.y! + 12} V${(l.source.y! + l.target.y!) / 2 + 10} H${l.target.x} V${l.target.y! - 24}`} fill="none" stroke="#BDBDBD" />
+              {l.target.data.pct != null && <text x={l.target.x! + 4} y={(l.source.y! + l.target.y!) / 2 + 24} fontSize={11} fill="#4B4291" fontWeight={600} fontFamily="Public Sans">{l.target.data.pct}%</text>}
+            </g>
           ))}
           {layout.nodes.map((n) => {
             const d = n.data;
@@ -114,10 +120,10 @@ function TreeDiagram({ root, collapsed, toggle }: { root: CorpNode; collapsed: S
             return (
               <g key={d.id} transform={`translate(${n.x} ${n.y})`} data-node>
                 <title>{`${d.registeredName}\nCountry: ${d.country}${d.companyId ? '\nClick the name to open the company page' : ''}`}</title>
-                <text y={-18} textAnchor="middle" fontSize={13} fontWeight={600} fill="#282828" fontFamily="Public Sans" className={d.companyId ? 'cursor-pointer hover:underline' : ''} onClick={() => d.companyId && window.open(profilePath(d.companyId), '_blank')}>{label}</text>
+                <text y={-18} textAnchor="middle" fontSize={13} fontWeight={600} fill="#282828" fontFamily="Public Sans" className={d.companyId ? 'cursor-pointer hover:underline' : ''} onClick={() => d.companyId && window.open(profilePath(d.companyId), '_blank')}>{flagOf(d.country)} {label}</text>
                 <circle r={10} fill={isCur ? '#D7263D' : '#fff'} stroke={isCur ? '#D7263D' : '#4B4291'} strokeWidth={2} className={hasKids ? 'cursor-pointer' : ''} onClick={() => hasKids && toggle(d.id)} data-node-circle={d.id} />
                 {hasKids && (
-                  <g transform="translate(-7 14)" className="cursor-pointer" onClick={() => toggle(d.id)} aria-label={open ? 'Collapse' : 'Expand'}>
+                  <g transform="translate(-7 14)" className="cursor-pointer" role="button" tabIndex={0} onClick={() => toggle(d.id)} onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && toggle(d.id)} aria-label={`${open ? 'Collapse' : 'Expand'} ${d.name}`}>
                     {open ? <ChevronUp size={14} color={isCur ? '#8A2020' : '#4B4291'} strokeWidth={3} /> : <ChevronDown size={14} color={isCur ? '#8A2020' : '#4B4291'} strokeWidth={3} />}
                   </g>
                 )}

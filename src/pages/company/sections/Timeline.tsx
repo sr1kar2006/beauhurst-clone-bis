@@ -32,7 +32,7 @@ export function Timeline({ c, p }: SectionProps) {
     if (idx >= limit) { setLimit(idx + 10); return; }
     const el = document.getElementById(`ev-${jump}`);
     if (el) {
-      const y = el.getBoundingClientRect().top + window.scrollY - 250;
+      const y = el.getBoundingClientRect().top + window.scrollY - 282;
       window.scrollTo({ top: y, behavior: 'smooth' });
       el.classList.add('ring-2', 'ring-primary');
       setTimeout(() => el.classList.remove('ring-2', 'ring-primary'), 1600);
@@ -44,7 +44,7 @@ export function Timeline({ c, p }: SectionProps) {
   return (
     <>
       <SectionTitle>Timeline</SectionTitle>
-      <div className="sticky top-[56px] z-20 -mx-[2px] px-[2px] pb-[10px] bg-page">
+      <div className="sticky top-[140px] z-20 -mx-[2px] px-[2px] pb-[10px] bg-page">
         <Card bodyClass="py-[8px]"><MiniTimeline p={p} onSelect={(e) => { if (!selected.includes(e.type)) setSelected([...selected, e.type]); setJump(e.id); }} /></Card>
       </div>
       <div className="flex items-center justify-between my-[12px]">
@@ -93,7 +93,7 @@ function Node({ e }: { e: TimelineEvent }) {
     const Icon = SIG_ICON[e.type] ?? Star;
     return <span className="relative z-[1] w-[28px] h-[28px] rounded-full bg-money-yellow border-2 border-white shadow flex items-center justify-center self-center"><Icon size={14} className="text-ink" /></span>;
   }
-  if (e.type === 'News') return <span className="relative z-[1] w-[28px] h-[28px] rounded-full bg-chip-blue border-2 border-white flex items-center justify-center self-center"><FileText size={13} className="text-bar-blue" /></span>;
+  if (e.type === 'News') return <span className="relative z-[1] w-[28px] h-[28px] rounded-full bg-chip-blue border-2 border-white flex items-center justify-center self-center"><FileText size={13} className="text-badge-blue-text" /></span>;
   return <span className="relative z-[1] w-[10px] h-[10px] rounded-full bg-[#BDBDBD] border-2 border-white self-center" />;
 }
 

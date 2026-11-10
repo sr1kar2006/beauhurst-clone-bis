@@ -1,3 +1,6 @@
+import { personIdFor } from '../../../data/persons';
+import { PersonName } from '../../../components/people/PersonName';
+import { PROTOTYPE_NOTICE } from '../../../config';
 import { useState } from 'react';
 import { Check, X } from 'lucide-react';
 import type { SectionProps } from '../CompanyPage';
@@ -13,11 +16,11 @@ export const FILING_CATEGORIES = [
 ];
 
 /** Placeholder PDF of the filing, generated in the browser and opened in a new tab. */
-async function openPdf(f: Filing, companyName: string, registeredName: string) {
+export async function openFilingPdf(f: Filing, companyName: string, registeredName: string, registryName = 'Companies House') {
   const win = window.open('', '_blank');
   const { jsPDF } = await import('jspdf');
   const doc = new jsPDF();
-  doc.setFontSize(10); doc.text('Companies House filing (placeholder generated for this demo)', 14, 14);
+  doc.setFontSize(10); doc.text(`${registryName} filing (sample document generated for this demo)`, 14, 14);
   doc.setFontSize(18); doc.text(f.code, 14, 30);
   doc.setFontSize(12);
   doc.text(registeredName, 14, 42);
@@ -26,8 +29,17 @@ async function openPdf(f: Filing, companyName: string, registeredName: string) {
   doc.text(`Category: ${f.category}`, 14, 67);
   doc.text(doc.splitTextToSize(`${f.lead} ${f.rest}`.trim(), 180), 14, 80);
   (f.bullets ?? []).forEach((b, i) => doc.text(`• ${b}`, 18, 96 + i * 7));
+  doc.setFontSize(8); doc.setTextColor(110); doc.text(PROTOTYPE_NOTICE, 14, 287);
   const url = URL.createObjectURL(doc.output('blob'));
   if (win) win.location.href = url; else window.open(url, '_blank');
+}
+
+/** "Appointment of Jane Doe" → person name links to the person profile. */
+function FilingLead({ lead, companyId }: { lead: string; companyId: string }) {
+  const m = /^(Appointment of |Termination of appointment of |Director's details changed for )(.+)$/.exec(lead);
+  const id = m ? personIdFor(companyId, m[2]) : undefined;
+  if (!m || !id) return <>{lead}</>;
+  return <>{m[1]}<PersonName id={id} name={m[2]} /></>;
 }
 
 export function FilingHistory({ c, p }: SectionProps) {
@@ -45,8 +57,8 @@ export function FilingHistory({ c, p }: SectionProps) {
         <aside className="w-[175px] shrink-0 bg-surface border border-card-border rounded-card p-[12px]" data-tour="filing-filter">
           <div className="text-[14px] font-semibold text-ink mb-[6px]">Filter by type</div>
           <div className="flex flex-col gap-[3px] mb-[8px] text-[13px]">
-            <button onClick={() => setPending(FILING_CATEGORIES)} className="inline-flex items-center gap-[4px] text-primary hover:underline"><Check size={13} />Select all</button>
-            <button onClick={() => setPending([])} className="inline-flex items-center gap-[4px] text-primary hover:underline"><X size={13} />Clear all</button>
+            <button onClick={() => setPending(FILING_CATEGORIES)} className="inline-flex items-center gap-[4px] min-h-[24px] px-[2px] text-primary hover:underline"><Check size={13} />Select all</button>
+            <button onClick={() => setPending([])} className="inline-flex items-center gap-[4px] min-h-[24px] px-[2px] text-primary hover:underline"><X size={13} />Clear all</button>
           </div>
           <div className="space-y-[5px]">
             {FILING_CATEGORIES.map((cat) => (
@@ -74,11 +86,11 @@ export function FilingHistory({ c, p }: SectionProps) {
                     <tr key={f.id} className="border-b border-card-border last:border-0 align-top">
                       <td className="py-[9px] px-[10px] w-[90px] text-ink"><div>{md},</div><div>{y}</div></td>
                       <td className="py-[9px] px-[10px] text-text">
-                        <strong className="text-ink">{f.lead}</strong> {f.rest}
+                        <strong className="text-ink"><FilingLead lead={f.lead} companyId={c.id} /></strong> {f.rest}
                         {f.bullets && <ul className="list-disc pl-[18px] mt-[4px]">{f.bullets.map((b) => <li key={b}>{b}</li>)}</ul>}
                       </td>
                       <td className="py-[9px] px-[10px] w-[110px] font-mono text-[13px] text-ink">{f.code}</td>
-                      <td className="py-[9px] px-[10px] w-[90px]"><button onClick={() => openPdf(f, c.name, p.registeredName)} className="text-primary hover:underline whitespace-nowrap">View PDF</button></td>
+                      <td className="py-[9px] px-[10px] w-[90px]"><button onClick={() => openFilingPdf(f, c.name, p.registeredName, c.registry.name)} className="text-primary hover:underline whitespace-nowrap">View PDF</button></td>
                     </tr>
                   );
                 })}

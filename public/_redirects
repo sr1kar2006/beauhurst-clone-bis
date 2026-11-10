@@ -1,0 +1,2 @@
+# Netlify SPA fallback. If deployed under a sub-path, prefix both sides with VITE_BASE_PATH.
+/*    /index.html   200

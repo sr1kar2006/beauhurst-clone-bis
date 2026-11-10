@@ -1,4 +1,6 @@
 import { ChevronDown, ChevronUp, Eye, IdCard, ListPlus } from 'lucide-react';
+import { Flag } from '../ui/Flag';
+import { useCompare, MAX_COMPARE } from '../../store/compareStore';
 import { Link } from 'react-router-dom';
 import { profilePath } from '../../lib/nav';
 import type { Company } from '../../data/types';
@@ -26,7 +28,9 @@ export function ResultsTable({ rows }: { rows: Company[] }) {
 
   const cols = columns.includes('name') ? columns : (['name', ...columns] as ColumnId[]);
   const rest = cols.filter((c) => c !== 'name');
-  const template = `${COLUMN_WIDTH.name} ${rest.map((c) => COLUMN_WIDTH[c]).join(' ')} 156px`;
+  const template = `22px ${COLUMN_WIDTH.name} ${rest.map((c) => COLUMN_WIDTH[c]).join(' ')} 156px`;
+  const compareIds = useCompare((s) => s.ids);
+  const toggleCompare = useCompare((s) => s.toggle);
 
   const onSort = (col: ColumnId) => {
     const key = SORTABLE[col];
@@ -38,6 +42,7 @@ export function ResultsTable({ rows }: { rows: Company[] }) {
   return (
     <div className="bg-surface border border-border rounded-card overflow-x-auto" role="table" aria-label="Search results" data-tour="results-table">
       <div className="grid items-center gap-x-[18px] px-[18px] h-[46px] border-b border-border text-[14px] font-semibold text-ink min-w-[900px]" style={{ gridTemplateColumns: template }} role="row">
+        <span role="columnheader" className="sr-only">Compare</span>
         {cols.map((col) => {
           const key = SORTABLE[col];
           const active = !!key && sort.key === key;
@@ -59,11 +64,28 @@ export function ResultsTable({ rows }: { rows: Company[] }) {
           className="grid gap-x-[18px] px-[18px] py-[12px] border-b border-border last:border-b-0 hover:bg-[#FAFAFA] text-[14px] text-text min-w-[900px]"
           style={{ gridTemplateColumns: template, gridTemplateRows: 'auto auto' }}
         >
+          <div className="row-span-2 flex items-center" role="cell">
+            <input
+              type="checkbox"
+              data-compare-check={c.id}
+              aria-label={`Compare ${c.name}`}
+              checked={compareIds.includes(c.id)}
+              disabled={!compareIds.includes(c.id) && compareIds.length >= MAX_COMPARE}
+              onChange={() => toggleCompare(c.id)}
+              className="w-[16px] h-[16px] accent-primary cursor-pointer disabled:cursor-not-allowed"
+            />
+          </div>
           <div className="row-span-2 flex items-center gap-[14px] min-w-0" role="cell">
             <img src={c.logo} alt="" className="w-[52px] h-[52px] border border-border rounded-[2px] shrink-0 bg-white" loading="lazy" />
-            <Link to={profilePath(c.id)} data-company-link className="text-left text-[15px] font-semibold text-ink hover:text-primary hover:underline truncate">
-              {c.name}
-            </Link>
+            <div className="min-w-0">
+              <Link to={profilePath(c.id)} data-company-link className="block text-left text-[15px] font-semibold text-ink hover:text-primary hover:underline truncate">
+                {c.name}
+              </Link>
+              <span className="flex items-center gap-[5px] text-[12px] text-muted mt-[2px]">
+                <Flag code={c.country ?? 'GB'} className="text-[13px]" />
+                {c.listed ? <span className="px-[5px] rounded-[3px] bg-chip-blue text-badge-blue-text font-semibold">{c.ticker}</span> : <span>Private</span>}
+              </span>
+            </div>
           </div>
           {rest.map((col) => (
             <div key={col} role="cell" className="min-w-0 self-end pt-[4px]"><Cell c={c} col={col} /></div>

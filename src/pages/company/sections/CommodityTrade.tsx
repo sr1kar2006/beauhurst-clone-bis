@@ -21,7 +21,7 @@ export function CommodityTrade({ p }: SectionProps) {
   const [listRange, setListRange] = useState<Range>('all');
   const [settings, setSettings] = useState(false);
   if (!cm) {
-    return <><SectionTitle>Commodity Trade</SectionTitle><Card><EmptyState title="No commodity trade recorded">We haven't found HMRC import or export records for this company.</EmptyState></Card></>;
+    return <><SectionTitle>Commodity Trade</SectionTitle><Card><span data-section-empty /><EmptyState title="No commodity trade recorded">We haven't found customs import or export records for this company.</EmptyState></Card></>;
   }
   const monthly = range === 'all' ? cm.monthly : cm.monthly.slice(-Number(range));
   const axisText = { fontFamily: 'Public Sans', color: '#595959', fontSize: 11 };

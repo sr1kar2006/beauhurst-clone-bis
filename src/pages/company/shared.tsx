@@ -1,3 +1,4 @@
+import { ProvenanceInfo } from './provenance';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import ReactECharts from 'echarts-for-react';
 import type { EChartsOption } from 'echarts';
@@ -203,7 +204,7 @@ export function TransactionsSummary({ p, seeAll, yTitle = false, title = 'Transa
   const k = txKpis(p);
   const hasPts = p.transactions.some((t) => t.type === 'fundraising');
   return (
-    <Card title={title} seeAll={seeAll} tourKey="transactions-summary">
+    <Card title={title} source="fundraisings" seeAll={seeAll} tourKey="transactions-summary">
       <div className="flex gap-[24px] items-start">
         <div className="flex gap-[10px] pt-[10px] shrink-0">
           <KpiCapsule value={k.frCount} tag={formatMoney(k.frTotal) || '£0'} caption="Fundraisings secured" />
@@ -227,7 +228,7 @@ export function FinancialSummary({ p, tourKey }: { p: CompanyProfile; tourKey?: 
   const [mode, setMode] = useState<'graph' | 'table'>('graph');
   const years = p.financials;
   if (!years.length) {
-    return <Card title="Financials"><p className="text-[14px] text-muted text-center py-[20px]">This company has not filed full financial statements.</p></Card>;
+    return <Card title="Financials" source="accounts"><p className="text-[14px] text-muted text-center py-[20px]">This company has not filed full financial statements.</p></Card>;
   }
   const last = years[years.length - 1].values, prev = years[years.length - 2]?.values;
   const fmt = (kind: 'money' | 'int', v: number) => (kind === 'int' ? formatInt(v) : (v < 0 ? '-' : '') + (formatMoney(Math.abs(v)) || '£0'));
@@ -236,7 +237,7 @@ export function FinancialSummary({ p, tourKey }: { p: CompanyProfile; tourKey?: 
     ['Latest auditors', p.credit.auditors], ['Senior auditor name', p.credit.seniorAuditor], ['Date of most recent accounts', formatDate(p.credit.accountsDate)], ['Latest account type', p.credit.accountType],
   ];
   return (
-    <Card title="Financials" tourKey={tourKey} actions={<SegmentedToggle size="sm" value={mode} onChange={setMode} options={[{ value: 'graph', label: 'Graph' }, { value: 'table', label: 'Table' }]} />}>
+    <Card title="Financials" source="accounts" tourKey={tourKey} actions={<SegmentedToggle size="sm" value={mode} onChange={setMode} options={[{ value: 'graph', label: 'Graph' }, { value: 'table', label: 'Table' }]} />}>
       {mode === 'graph' ? (
         <div className="grid grid-cols-4 gap-x-[18px] gap-y-[18px]">
           {SUMMARY_METRICS.map((m) => {
@@ -244,7 +245,7 @@ export function FinancialSummary({ p, tourKey }: { p: CompanyProfile; tourKey?: 
             const series = years.map((y) => y.values[m.id] as number);
             return (
               <div key={m.id} className="min-w-0">
-                <div className="text-[13px] text-text">{m.label}</div>
+                <div className="text-[13px] text-text">{m.label}{(m.id === 'turnover' || m.id === 'netAssets') && <ProvenanceInfo dataset="accounts" label={m.label} />}</div>
                 <div className="flex items-center gap-[10px]">
                   <span className="text-[18px] font-bold text-ink">{fmt(m.kind, v)}</span>
                   <Sparkline values={series.slice(-5)} width={70} />
@@ -268,7 +269,7 @@ export function FinancialSummary({ p, tourKey }: { p: CompanyProfile; tourKey?: 
         </table>
       )}
       <div className="border-t border-card-border mt-[16px] pt-[14px] grid grid-cols-4 gap-x-[18px] gap-y-[12px]">
-        {facts.map(([k, v]) => <div key={k}><div className="text-[13px] text-text">{k}</div><div className="text-[14px] text-ink font-medium">{v}</div></div>)}
+        {facts.map(([k, v]) => <div key={k}><div className="text-[13px] text-text">{k}{k === 'Latest credit rating' && <ProvenanceInfo dataset="credit" label="Credit rating" />}</div><div className="text-[14px] text-ink font-medium">{v}</div></div>)}
       </div>
     </Card>
   );
@@ -293,7 +294,7 @@ export function KeyPeopleCard({ c, p, compact = false, seeAll }: { c: Company; p
   useEffect(() => setPage(1), [fn, mine]);
 
   return (
-    <Card title={compact ? 'People' : 'Current key people'} seeAll={seeAll} tourKey="key-people">
+    <Card title={compact ? 'People' : 'Current key people'} source="officers" seeAll={seeAll} tourKey="key-people">
       <div className="flex items-start justify-between gap-[20px] pb-[14px] border-b border-card-border">
         <div>
           <div className="text-[13px] text-text">{ceo.position}</div>

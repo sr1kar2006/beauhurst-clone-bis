@@ -3,6 +3,7 @@ import { Check, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
 import type { SectionProps } from '../CompanyPage';
 import type { Investor, TxType } from '../../../data/profile/types';
 import { formatLongDate, formatMoney } from '../../../lib/format';
+import { formatMoneyLocal } from '../../../lib/money';
 import { Card, InvestorLine, Pager, SectionTitle, StageTag } from '../ui';
 import { TransactionsSummary } from '../shared';
 
@@ -11,7 +12,8 @@ const TABS: { id: TxType | 'all'; label: string }[] = [
   { id: 'mbo', label: 'MBO/MBIs' }, { id: 'acquisition', label: 'Acquisitions' }, { id: 'spinout', label: 'Spinouts' },
 ];
 
-export function Transactions({ p }: SectionProps) {
+export function Transactions({ c, p }: SectionProps) {
+  const fm = (v?: number) => formatMoneyLocal(c, v);
   const [tab, setTab] = useState<TxType | 'all'>('all');
   const [page, setPage] = useState(1);
   const size = 10;
@@ -57,8 +59,8 @@ export function Transactions({ p }: SectionProps) {
                   <td className="py-[10px] px-[10px] w-[150px]">
                     {!t.announced && !t.verified ? '—' : (
                       <div className="flex flex-col items-start gap-[4px]">
-                        {t.announced && <span className="bg-money-grey text-ink text-[12px] px-[6px] py-[1px] rounded-[3px]">{formatMoney(t.announced)} announced</span>}
-                        {t.verified && <span className="bg-money-yellow text-ink text-[12px] font-semibold px-[6px] py-[1px] rounded-[3px] inline-flex items-center gap-[3px]">{formatMoney(t.verified)} verified <Check size={12} strokeWidth={3} /></span>}
+                        {t.announced && <span className="bg-money-grey text-ink text-[12px] px-[6px] py-[1px] rounded-[3px]">{fm(t.announced)} announced</span>}
+                        {t.verified && <span className="bg-money-yellow text-ink text-[12px] font-semibold px-[6px] py-[1px] rounded-[3px] inline-flex items-center gap-[3px]">{fm(t.verified)} verified <Check size={12} strokeWidth={3} /></span>}
                       </div>
                     )}
                   </td>

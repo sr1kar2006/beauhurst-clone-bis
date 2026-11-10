@@ -20,6 +20,9 @@ export const ALL_COLUMNS = [
   { id: 'website', label: 'Website' },
   { id: 'chStatus', label: 'Companies House status' },
   { id: 'signals', label: 'Signals' },
+  { id: 'creditRating', label: 'Credit rating' },
+  { id: 'ultimateParent', label: 'Ultimate parent' },
+  { id: 'nextAccountsDue', label: 'Next accounts due' },
 ] as const;
 export type ColumnId = (typeof ALL_COLUMNS)[number]['id'];
 const DEFAULT_COLS: ColumnId[] = ['name', 'industries', 'headOffice', 'fundraisingTotal', 'latestFundraisingDate'];

@@ -40,7 +40,7 @@ describe('Lumen Bank fixture', () => {
   });
 
   it('financial statements reconcile every year', () => {
-    expect(lumen.financials).toHaveLength(5);
+    expect(lumen.financials).toHaveLength(9);
     lumen.financials.forEach(({ values: v }) => {
       const n = (k: string) => v[k] as number;
       expect(n('grossProfit')).toBe(n('turnover') - n('costOfSales'));
@@ -52,7 +52,7 @@ describe('Lumen Bank fixture', () => {
       expect(n('shareholderFunds')).toBe(n('netAssets'));
       expect(n('netCashBeforeFinancing') + n('netCashFinancing')).toBe(n('increaseInCash'));
     });
-    const last = lumen.financials[4].values;
+    const last = lumen.financials[lumen.financials.length - 1].values;
     expect(last.turnover).toBe(880_000_000);
     expect(last.operatingProfit).toBe(192_000_000);
     expect(last.ebitda).toBe(199_000_000);

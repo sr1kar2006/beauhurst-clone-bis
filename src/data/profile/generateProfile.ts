@@ -14,6 +14,11 @@ import { formatMoney, addDays } from '../../lib/format';
 import { LUMEN_ID, GROUP_DEMO_ID, LUMEN_INVESTORS, LUMEN_ROUNDS } from '../fixtures/lumen-bank';
 import { buildFinancials, YearDriver } from './financials';
 import { buildOwnership } from './ownership';
+import { localiseProfile } from './localiseProfile';
+import { finHistory } from '../finIndex';
+import { riskOf } from '../riskIndex';
+import { enrichNews } from '../news';
+import { groupTree, isGroupMember, pscRegister } from '../groups';
 import type {
   ActivityItem, Charge, Commodities, CompanyProfile, CorpNode, Filing, HsItem, Investor, NewsItem, Patent, Person,
   Seg, TimelineEvent, Transaction,
@@ -94,7 +99,11 @@ export function getProfile(id: string): CompanyProfile | null {
   if (hit) return hit;
   const c = getCompany(id);
   if (!c) return null;
-  const p = build(c);
+  const p = c.country && c.country !== 'GB' ? localiseProfile(build(c), c) : build(c);
+  // group members get the cross-border group tree (with % on each edge) and a PSC register
+  if (isGroupMember(c.id)) p.corporateTree = groupTree(c.id);
+  p.news = enrichNews(p.news);
+  p.people.psc = pscRegister(c, p).filter((x) => x.kind === 'individual').map((x, i) => ({ id: `${c.id}-psc-${i}`, name: x.name, position: x.natures[0], fn: 'Ownership', linkedin: false, degree: null, appointed: x.notified, resigned: x.ceased }));
   cache.set(id, p);
   return p;
 }
@@ -102,6 +111,8 @@ export function getProfile(id: string): CompanyProfile | null {
 function build(c: Company): CompanyProfile {
   const isLumen = c.id === LUMEN_ID;
   const isGroup = c.id === GROUP_DEMO_ID;
+  /** first company of each seeded country (gb1, ie1, de1 …) has data in every section, for parity demos */
+  const showcase = /^[a-z]{2}-1$/.test(c.id);
   const seed = hash(c.id);
   const r = new Rng(seed);
   faker.seed(seed);
@@ -231,7 +242,7 @@ function build(c: Company): CompanyProfile {
   });
   if (r.chance(0.7)) F(between(r, c.foundedDate, '2020-01-01'), 'AD01', 'Address', 'Registered office address changed', `to ${r.int(1, 90)} ${r.pick(STREETS)}`);
   if (isLumen || r.chance(0.2)) F(between(r, '2019-01-01', '2023-01-01'), 'AA01', 'Accounts', 'Previous accounting period shortened', 'from 30 April to 31 March');
-  const charges: Charge[] = !isLumen && (r.chance(0.12) || c.signals.includes('risk:ccj-registered'))
+  const charges: Charge[] = !isLumen && (r.chance(0.12) || showcase || c.signals.includes('risk:ccj-registered'))
     ? Array.from({ length: r.int(1, 3) }, () => {
         const created = between(r, c.foundedDate, PROFILE_TODAY);
         F(addDays(created, 10), 'MR01', 'Mortgage', 'Registration of charge', `created on ${created}`);
@@ -292,8 +303,8 @@ function build(c: Company): CompanyProfile {
   accelerators.forEach((a) => T({ date: a.start, type: 'Accelerator', letter: 'A', significant: true, parts: ['Started the ', { t: a.name, kind: 'company' }, ' accelerator programme'], detail: [['Programme', a.name], ['Start', a.start], ['End', a.end]] }));
   highGrowthLists.forEach((h) => T({ date: h.announced, type: 'High growth list', letter: 'L', significant: true, parts: ['Named on the ', { t: `${h.name} (${h.cohort})`, kind: 'article' }, ' high growth list'], detail: [['List', h.name], ['Cohort', h.cohort]] }));
   c.directors.forEach((d) => {
-    T({ date: d.appointed, type: 'Person added', letter: null, significant: false, parts: [{ t: d.name, kind: 'person' }, ' was appointed as a director'] });
-    if (d.resigned) T({ date: d.resigned, type: 'Person removed', letter: null, significant: false, parts: [{ t: d.name, kind: 'person' }, ' resigned as a director'] });
+    T({ date: d.appointed, type: 'Person added', letter: null, significant: false, parts: [{ t: d.name, kind: 'person', id: d.personId }, ' was appointed as a director'] });
+    if (d.resigned) T({ date: d.resigned, type: 'Person removed', letter: null, significant: false, parts: [{ t: d.name, kind: 'person', id: d.personId }, ' resigned as a director'] });
   });
   allFilings.forEach((f) => {
     if (f.code === 'RESOLUTIONS') T({ date: f.date, type: 'Resolution', letter: 'R', significant: false, parts: ['Filed ', { t: 'RESOLUTIONS', kind: 'filing' }, ` on ${f.date}`] });
@@ -351,7 +362,7 @@ function build(c: Company): CompanyProfile {
     anchors,
     personName,
     companyNames: [...new Set([...investorNames, ...INVESTORS.slice(0, 6), `${c.name} Employee Benefit Trust`, 'Quayline Nominees Limited'])],
-    dates: isLumen ? ['2022-04-12', '2023-02-27', '2024-02-29'] : ['2023-02-14', '2024-02-14'],
+    dates: isLumen ? ['2022-04-12', '2023-02-27', '2024-02-29'] : ((n) => Array.from({ length: n }, (_, i) => `${2024 - n + 1 + i}-02-14`))(Math.min(20, Math.max(2, 2024 - Number(c.foundedDate.slice(0, 4))))),
   });
   const totalShares = classes.reduce((s, x) => s + x.shares, 0);
   const lastRound = rounds[rounds.length - 1];
@@ -361,41 +372,18 @@ function build(c: Company): CompanyProfile {
   const corporateTree = buildTree(c, r, registeredName, isLumen, isGroup);
 
   // ---------------- commodities
-  const commodities = isLumen || c.imports || c.exports ? buildCommodities(r, isLumen ? 5 : c.imports ? r.int(1, 6) : 0, isLumen ? 2 : c.exports ? r.int(1, 4) : 0) : null;
+  const commodities = isLumen || showcase || c.imports || c.exports ? buildCommodities(r, isLumen ? 5 : c.imports || showcase ? r.int(1, 6) : 0, isLumen ? 2 : c.exports || showcase ? r.int(1, 4) : 0) : null;
 
   // ---------------- financials
-  let drivers: YearDriver[] = [];
-  if (isLumen) {
-    drivers = [
-      ['2020-03-31', 95e6, -48e6, 2e6, 1.6e9, 120e6, 0.9e9, 640],
-      ['2021-03-31', 160e6, -31e6, 3e6, 3.4e9, 260e6, 2.1e9, 1050],
-      ['2022-03-31', 290e6, 18e6, 4e6, 6.2e9, 430e6, 3.8e9, 1720],
-      ['2023-03-31', 466e6, 77e6, 5.5e6, 9.3e9, 655e6, 5.6e9, 2480],
-      ['2024-03-31', 880e6, 192e6, 7e6, 13.0e9, 862e6, 7.62e9, 3145],
-    ].map(([yearEnd, turnover, operatingProfit, amortDep, totalAssets, netAssets, cash, employees]) => ({ yearEnd, turnover, operatingProfit, amortDep, totalAssets, netAssets, cash, employees } as YearDriver));
-  } else if (c.turnover || c.hasFullFinancials) {
-    const years = r.int(2, 3);
-    const T0 = c.turnover ?? Math.round(r.logNormal(2_000_000, 1));
-    const margin = -0.3 + r.next() * 0.5;
-    const yEnd = r.pick(['03-31', '12-31']);
-    for (let i = years - 1; i >= 0; i--) {
-      const g = Math.pow(1 + (-0.1 + r.next() * 0.5), i);
-      const Ty = Math.round(T0 / g);
-      const TA = Math.round(Ty * (0.9 + r.next() * 0.7));
-      drivers.push({
-        yearEnd: `${(yEnd === '12-31' ? 2023 : 2024) - i}-${yEnd}`, turnover: Ty, operatingProfit: Math.round(Ty * margin), amortDep: Math.round(Ty * 0.02),
-        totalAssets: TA, netAssets: Math.round(i === 0 && c.netAssets != null ? c.netAssets : TA * 0.3), cash: Math.round(TA * 0.25),
-        employees: Math.max(1, Math.round((c.employees ?? Ty / 120_000) / Math.sqrt(g))),
-      });
-    }
-  }
+  // shared with the analysis grid and financial search criteria (see data/finIndex.ts)
+  const drivers: YearDriver[] = finHistory(c);
   const financials = drivers.length
     ? buildFinancials(drivers, { totalRaised, exportShare: c.exports ? 0.08 : 0, bank: isLumen, auditors: isLumen ? 'Harrowgate & Finch LLP' : r.pick(['Pemberton Reeve LLP', 'Calder & Moss LLP', 'Ashby Rowe Audit LLP']), seniorAuditor: isLumen ? 'Philippa Arkwright' : personName(), consolidated: isLumen || isGroup })
     : [];
 
   const credit = {
-    rating: isLumen ? 'A (92/100) Very low risk' : r.pick(['A (84/100) Very low risk', 'B (63/100) Low risk', 'C (44/100) Moderate risk', 'D (21/100) High risk']),
-    limit: isLumen ? 5_000_000 : Math.round((c.turnover ?? 200_000) * 0.02 / 1000) * 1000,
+    rating: isLumen ? 'A (92/100) Very low risk' : (r.next(), riskOf(c).rating),
+    limit: isLumen ? 5_000_000 : riskOf(c).creditLimit,
     updated: isLumen ? '2024-10-02' : between(r, '2024-01-01', PROFILE_TODAY),
     auditors: financials.length ? String(financials[financials.length - 1].values.auditors) : '—',
     seniorAuditor: financials.length ? String(financials[financials.length - 1].values.seniorAuditor) : '—',
@@ -404,7 +392,7 @@ function build(c: Company): CompanyProfile {
   };
 
   // ---------------- patents
-  const patents: Patent[] = c.signals.includes('innovation:patent-filed') && !isLumen
+  const patents: Patent[] = (c.signals.includes('innovation:patent-filed') || showcase) && !isLumen
     ? Array.from({ length: r.int(1, 4) }, (_, i) => ({
         title: `${cap(r.pick(['system', 'method', 'apparatus', 'device']))} for ${r.pick(['processing sensor data', 'secure payments', 'image recognition', 'battery management', 'route optimisation'])}`,
         applicationNo: `GB${r.int(2015, 2024)}${String(r.int(1000, 99999)).padStart(5, '0')}.${i}`,

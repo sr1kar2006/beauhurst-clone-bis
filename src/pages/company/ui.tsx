@@ -1,3 +1,9 @@
+import type { DatasetId } from '../../config/tender';
+import { SourceFooter, useProvenance, SECTION_DATASET } from './provenance';
+import { coverageFor } from '../../config/tender';
+import { SampleTag } from '../../components/ui/Sample';
+import { personIdFor } from '../../data/persons';
+import { PersonName } from '../../components/people/PersonName';
 import { ReactNode, useState } from 'react';
 import { create } from 'zustand';
 import { Link } from 'react-router-dom';
@@ -8,8 +14,10 @@ import { pageCount, pageItems } from '../../query/sort';
 import { CompactSelect } from '../../components/ui/CompactSelect';
 
 // ---------------------------------------------------------------- layout
-export function Card({ title, children, actions, seeAll, className = '', bodyClass = '', tourKey, info }: {
+export function Card({ title, children, actions, seeAll, className = '', bodyClass = '', tourKey, info, source }: {
   title?: ReactNode; children: ReactNode; actions?: ReactNode; seeAll?: string; className?: string; bodyClass?: string; tourKey?: string; info?: string;
+  /** dataset for the provenance footer; defaults to the section's dataset; false hides it */
+  source?: DatasetId | false;
 }) {
   return (
     <section className={`bg-surface border border-card-border rounded-card ${className}`} data-tour={tourKey}>
@@ -26,6 +34,7 @@ export function Card({ title, children, actions, seeAll, className = '', bodyCla
         </header>
       )}
       <div className={`p-[15px] ${bodyClass}`}>{children}</div>
+      {source !== false && <SourceFooter dataset={source || undefined} cardKey={typeof title === 'string' ? title : undefined} />}
     </section>
   );
 }
@@ -39,9 +48,15 @@ export function SeeAll({ to }: { to: string }) {
 }
 
 export function SectionTitle({ children, actions }: { children: ReactNode; actions?: ReactNode }) {
+  const ctx = useProvenance();
+  // "Data available from {year}": the later of the coverage declared for this dataset/country and incorporation
+  const from = ctx ? Math.max(coverageFor(SECTION_DATASET[ctx.section], ctx.c.country).value.from, Number(ctx.p.incorporationDate.slice(0, 4))) : null;
   return (
     <div className="flex items-center justify-between mb-[14px]">
-      <h2 className="text-[22px] font-normal text-ink" data-tour="section-title">{children}</h2>
+      <h2 className="text-[22px] font-normal text-ink flex items-center gap-[10px]" data-tour="section-title">
+        {children}
+        {from && <span className="inline-flex items-center text-[12px] font-semibold text-badge-blue-text bg-chip-blue rounded-full px-[9px] py-[2px]" data-available-from title="From the coverage matrix on Data sources & methodology">Data available from {from}<SampleTag className="!ml-[5px]" /></span>}
+      </h2>
       {actions}
     </div>
   );
@@ -232,10 +247,12 @@ export function DegreeIcon({ degree }: { degree: Person['degree'] }) {
   );
 }
 
-export function PersonLink({ name, degree, className = '' }: { name: string; degree?: Person['degree']; className?: string }) {
+export function PersonLink({ name, degree, className = '', personId }: { name: string; degree?: Person['degree']; className?: string; personId?: string }) {
+  const ctx = useProvenance();
+  const id = personId ?? (ctx ? personIdFor(ctx.c.id, name) : undefined);
   return (
     <span className="inline-flex items-center">
-      <a href="#" onClick={(e) => e.preventDefault()} className={`text-primary hover:underline ${className}`}>{name}</a>
+      {id ? <PersonName id={id} name={name} className={className} /> : <span className={`text-ink ${className}`}>{name}</span>}
       {degree !== undefined && <DegreeIcon degree={degree} />}
     </span>
   );
@@ -263,9 +280,11 @@ export function Segs({ parts }: { parts: Seg[] }) {
     <>
       {parts.map((p, i) =>
         typeof p === 'string' ? <span key={i}>{p}</span> : p.kind === 'company' && p.id ? (
-          <Link key={i} to={`/companies/${p.id}`} className="text-primary hover:underline">{p.t}</Link>
+          <Link key={i} to={`/companies/${p.id}`} className="text-primary underline underline-offset-2">{p.t}</Link>
+        ) : p.kind === 'person' ? (
+          <PersonLink key={i} name={p.t} personId={p.id} />
         ) : (
-          <a key={i} href="#" onClick={(e) => e.preventDefault()} className="text-primary hover:underline">{p.t}{p.kind === 'filing' ? ' ⧉' : ''}</a>
+          <a key={i} href="#" onClick={(e) => e.preventDefault()} className="text-primary underline underline-offset-2">{p.t}{p.kind === 'filing' ? ' ⧉' : ''}</a>
         ),
       )}
     </>

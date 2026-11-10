@@ -4,3 +4,5 @@ dist
 e2e-shots
 test-results
 playwright-report
+.env
+.env.local

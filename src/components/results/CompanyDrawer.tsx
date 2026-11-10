@@ -1,3 +1,4 @@
+import { countryByCode } from '../../data/countries/iso3166';
 import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { ExternalLink, IdCard, ListPlus, X } from 'lucide-react';
@@ -30,7 +31,8 @@ export function CompanyDrawer() {
 
   const facts: [string, string][] = [
     ['Head office', c.headOffice],
-    ['Companies House ID', c.companiesHouseId],
+    ['Country', `${countryByCode(c.country).flag} ${countryByCode(c.country).name}`],
+    [c.registry.idLabel, c.registry.id],
     ['Status', c.chStatus],
     ['Founded', formatDate(c.foundedDate)],
     ['Employees (est.)', c.employees != null ? formatInt(c.employees) : '—'],

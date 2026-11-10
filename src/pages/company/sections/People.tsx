@@ -1,3 +1,5 @@
+import { formatDate } from '../../../lib/format';
+import { ProvenanceInfo } from '../provenance';
 import { useState } from 'react';
 import ReactECharts from 'echarts-for-react';
 import type { EChartsOption } from 'echarts';
@@ -19,14 +21,17 @@ export function People({ c, p }: SectionProps) {
       <SectionTitle>People</SectionTitle>
       <div className="space-y-[16px]">
         <KeyPeopleCard c={c} p={p} />
-        <Card title="Current directors">
+        <Card title={<>Current directors<ProvenanceInfo dataset="officers" label="Directors" /></>}>
           <DirectorTable rows={p.people.directors} />
         </Card>
         <Card title="Directors over time">
           {all.length ? <ReactECharts option={dumbbell(all)} notMerge style={{ height: Math.max(160, all.length * 26 + 60) }} /> : <p className="text-muted text-[14px]">No director history.</p>}
         </Card>
         <Card title="People with Significant Control">
-          <p className="text-[14px] text-text">No individuals or entities are registered as having significant control over this company. <a href="#" onClick={(e) => e.preventDefault()} className="text-primary underline">Learn about PSC filings</a>.</p>
+          {p.people.psc.length ? (
+            <table className="w-full" data-people-psc><thead><tr><th className={th}>Name</th><th className={th}>Nature of control</th><th className={th}>Notified</th><th className={th}>Ceased</th></tr></thead>
+              <tbody>{p.people.psc.map((x) => <tr key={x.id}><td className={td}><PersonLink name={x.name} /></td><td className={td}>{x.position}</td><td className={td}>{x.appointed ? formatDate(x.appointed) : '—'}</td><td className={td}>{x.resigned ? formatDate(x.resigned) : '—'}</td></tr>)}</tbody></table>
+          ) : <p className="text-[14px] text-text">No individuals are registered as having significant control over this company. Corporate owners are shown on the <a href={`/companies/${c.id}/ownership`} className="text-primary underline">Ownership</a> tab.</p>}
         </Card>
         <Card title="Current secretaries">
           {p.people.secretaries.length ? (

@@ -11,7 +11,7 @@ interface Item { key: string; date: string; kind: Kind; company: Company; text: 
 const ICON: Record<Kind, JSX.Element> = {
   fundraising: <Banknote size={16} className="text-bar-green" />,
   event: <Award size={16} className="text-bar-magenta" />,
-  director: <UserPlus size={16} className="text-bar-blue" />,
+  director: <UserPlus size={16} className="text-badge-blue-text" />,
   filing: <FileText size={16} className="text-muted" />,
 };
 const FILTERS: { id: Kind | 'all'; label: string }[] = [

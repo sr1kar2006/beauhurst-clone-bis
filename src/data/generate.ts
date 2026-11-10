@@ -1,4 +1,4 @@
-import { fakerEN_GB as faker } from '@faker-js/faker';
+import { fakerEN_GB as faker, type Faker } from '@faker-js/faker';
 import { Rng } from './rng';
 import type { Company, Director, Fundraising, Gender } from './types';
 import { INDUSTRY_ITEMS, AI_ID } from './taxonomies/industries';
@@ -44,6 +44,12 @@ function weightedYear(r: Rng): number {
   return r.weighted(entries);
 }
 
+const UK_CITY: Record<Region, string> = {
+  London: 'London', 'South East': 'Reading', 'East of England': 'Cambridge', 'North East': 'Newcastle upon Tyne', 'North West': 'Manchester',
+  'Yorkshire and the Humber': 'Leeds', 'East Midlands': 'Nottingham', 'West Midlands': 'Birmingham', 'South West': 'Bristol', Wales: 'Cardiff',
+  Scotland: 'Edinburgh', Tayside: 'Dundee', 'Northern Ireland': 'Belfast',
+};
+
 const iso = (d: Date) => d.toISOString().slice(0, 10);
 const clampDate = (d: Date) => (d > DATA_TODAY ? new Date(DATA_TODAY) : d);
 
@@ -57,10 +63,21 @@ const APP_SW = 'application-software';
 const DATA_PROV = 'data-provision';
 const INDUSTRY_POOL = INDUSTRY_ITEMS.filter((i) => i.id !== AI_ID && i.id !== APP_SW && i.id !== DATA_PROV);
 
-export function generateCompanies(count: number, seed: number): Company[] {
+export interface GenOptions {
+  /** id prefix, default "c" */
+  idPrefix?: string;
+  /** shared across calls so names stay unique in the combined dataset */
+  names?: Set<string>;
+  /** locale faker for people's names (default en-GB) */
+  fk?: Faker;
+}
+
+export function generateCompanies(count: number, seed: number, opts: GenOptions = {}): Company[] {
   const r = new Rng(seed);
   faker.seed(seed);
-  const names = new Set<string>();
+  const fk = opts.fk ?? faker;
+  if (opts.fk) opts.fk.seed(seed);
+  const names = opts.names ?? new Set<string>();
   const out: Company[] = [];
 
   for (let i = 0; i < count; i++) {
@@ -140,7 +157,7 @@ export function generateCompanies(count: number, seed: number): Company[] {
       const sex = g === 'Female' ? 'female' : 'male';
       const appointed = clampDate(new Date(founded.getTime() + r.int(0, 2500) * 864e5));
       const d: Director = {
-        name: `${faker.person.firstName(sex)} ${faker.person.lastName()}`,
+        name: `${fk.person.firstName(sex)} ${fk.person.lastName()}`,
         gender: g,
         birthYear: Math.round(1978 + r.normal() * 11),
         appointed: iso(appointed),
@@ -150,7 +167,7 @@ export function generateCompanies(count: number, seed: number): Company[] {
     });
     const founders = Array.from({ length: r.int(1, 3) }, () => {
       const g = gender(r, 0.8, 0.17);
-      return { name: `${faker.person.firstName(g === 'Female' ? 'female' : 'male')} ${faker.person.lastName()}`, gender: g };
+      return { name: `${fk.person.firstName(g === 'Female' ? 'female' : 'male')} ${fk.person.lastName()}`, gender: g };
     });
 
     const events = r.sample(SIGNIFICANT_EVENTS, r.weighted([[0, 4], [1, 3], [2, 2], [3, 1]])).map((type) => ({
@@ -165,7 +182,7 @@ export function generateCompanies(count: number, seed: number): Company[] {
     const chNum = String(r.int(prefix ? 100000 : 6000000, prefix ? 799999 : 15999999)).padStart(prefix ? 6 : 8, '0');
 
     out.push({
-      id: `c${i + 1}`,
+      id: `${opts.idPrefix ?? 'c'}${i + 1}`,
       name,
       logo: makeLogo(name, r),
       description: `${name} develops ${r.pick(ADJ)} ${r.pick(PRODUCT)} that helps ${r.pick(AUDIENCE)} ${r.pick(VERB)}.`,
@@ -175,6 +192,13 @@ export function generateCompanies(count: number, seed: number): Company[] {
       lat: lat0 + (r.next() - 0.5) * 0.5,
       lng: lng0 + (r.next() - 0.5) * 0.7,
       companiesHouseId: prefix + chNum,
+      // country fields: UK defaults here (no rng draws, so the UK stream is unchanged); see localise.ts
+      country: 'GB',
+      city: UK_CITY[region],
+      currency: 'GBP',
+      listed: false,
+      registry: { name: 'Companies House', idLabel: 'Company number', id: prefix + chNum },
+      registryStatus: chStatus,
       chStatus,
       stage,
       trackingStatus: r.weighted([[TRACKING[0], 72], [TRACKING[1], 17], [TRACKING[2], 11]]),
@@ -190,7 +214,7 @@ export function generateCompanies(count: number, seed: number): Company[] {
       employees,
       directors,
       founders,
-      shareholders: Array.from({ length: r.int(1, 12) }, () => faker.person.fullName()),
+      shareholders: Array.from({ length: r.int(1, 12) }, () => fk.person.fullName()),
       events,
       website: r.chance(0.86) ? `https://www.${slugName || 'company'}.co.uk` : undefined,
       socials: r.sample(SOCIALS, r.int(0, 4)),
@@ -222,7 +246,7 @@ export function generateSecondary(kind: 'de' | 'funds', count: number, seed: num
       const st = r.pick(DE_STATES);
       const [lat, lng] = DE_COORDS[st];
       const name = `${c.name.replace(/ (Ltd|UK|Group|Global)$/, '')} ${r.pick(['GmbH', 'AG', 'UG', 'GmbH & Co. KG'])}`;
-      return { ...c, id: `de${i + 1}`, name, headOffice: st as Region, lat: lat + (r.next() - 0.5) * 0.4, lng: lng + (r.next() - 0.5) * 0.6, companiesHouseId: `HRB ${r.int(10000, 299999)}`, legalForm: 'GmbH', description: c.description };
+      return { ...c, id: `de${i + 1}`, name, headOffice: st, country: 'DE', currency: 'EUR', city: st, lat: lat + (r.next() - 0.5) * 0.4, lng: lng + (r.next() - 0.5) * 0.6, companiesHouseId: `HRB ${r.int(10000, 299999)}`, legalForm: 'GmbH', description: c.description };
     }
     const name = `${c.name.split(' ')[0]} ${r.pick(['Fund I', 'Fund II', 'Growth Fund', 'Seed Fund', 'Opportunities Fund', 'EIS Fund'])}`;
     return { ...c, id: `f${i + 1}`, name, description: `${name} is a ${r.pick(['venture capital', 'growth equity', 'EIS', 'impact'])} fund investing in ${r.pick(['early-stage', 'growth-stage', 'deep tech', 'climate'])} companies.` };

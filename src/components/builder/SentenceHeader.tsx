@@ -4,6 +4,7 @@ import { useQuery } from '../../store/queryStore';
 import { useUi } from '../../store/uiStore';
 import { Popover } from '../ui/Popover';
 import { CompactSelect } from '../ui/CompactSelect';
+import { CountrySelect } from '../ui/CountrySelect';
 import { FlagDE } from './icons';
 import { ENTITY_LABELS } from './entity';
 import type { Entity } from '../../data/types';
@@ -25,6 +26,8 @@ export function SentenceHeader() {
   const combinator = useQuery((s) => s.combinator);
   const setEntity = useQuery((s) => s.setEntity);
   const setCombinator = useQuery((s) => s.setCombinator);
+  const countries = useQuery((s) => s.countries);
+  const setCountries = useQuery((s) => s.setCountries);
   const toggle = useUi((s) => s.toggle);
   const close = useUi((s) => s.close);
   const [el, setEl] = useState<HTMLButtonElement | null>(null);
@@ -42,7 +45,7 @@ export function SentenceHeader() {
         <ChevronDown size={14} className="text-text" />
       </button>
       <Popover id={ENTITY_MENU} anchor={el} width={240} caret={false} className="py-1">
-        {(['companies', 'de', 'funds'] as Entity[]).map((e) => (
+        {(['companies', 'people', 'de', 'funds'] as Entity[]).map((e) => (
           <button
             key={e}
             onClick={() => { setEntity(e); close(ENTITY_MENU); }}
@@ -53,6 +56,12 @@ export function SentenceHeader() {
           </button>
         ))}
       </Popover>
+      {(entity === 'companies' || entity === 'people') && (
+        <>
+          <span>in</span>
+          <CountrySelect mode="multi" value={countries} onChange={setCountries} label="Countries" tourKey="country-scope" />
+        </>
+      )}
       <span>where</span>
       <CompactSelect
         ariaLabel="Match all or any"

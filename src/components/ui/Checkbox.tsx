@@ -10,10 +10,12 @@ interface Props {
   className?: string;
   tourKey?: string;
   disabled?: boolean;
+  /** accessible name when the checkbox has no visible text */
+  ariaLabel?: string;
 }
 
 /** Custom checkbox supporting tri-state. Whole label is the click target. */
-export function Checkbox({ checked, onChange, children, className = '', tourKey, disabled }: Props) {
+export function Checkbox({ checked, onChange, children, className = '', tourKey, disabled, ariaLabel }: Props) {
   const state: TriState = checked === true ? 'on' : checked === false ? 'off' : checked;
   return (
     <label className={`inline-flex items-center gap-2 cursor-pointer select-none ${disabled ? 'opacity-50 cursor-default' : ''} ${className}`} data-tour={tourKey}>
@@ -22,6 +24,7 @@ export function Checkbox({ checked, onChange, children, className = '', tourKey,
         className="sr-only peer"
         checked={state === 'on'}
         disabled={disabled}
+        aria-label={ariaLabel ?? (children ? undefined : 'Select')}
         ref={(el) => { if (el) el.indeterminate = state === 'mixed'; }}
         onChange={() => onChange(state !== 'on')}
       />

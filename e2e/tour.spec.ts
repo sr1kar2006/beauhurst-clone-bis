@@ -56,8 +56,8 @@ test('tour 1 walks end to end with no manual help', async ({ page }) => {
   await actionStep('Click Confirm.', 'tree-confirm');
   await actionStep("you've successfully built your first search", 'search-button');
 
-  await expect(tip).toContainText(/Here are the 1,\d{3} active AI companies/);
-  await nextStep('active AI companies in the UK');
+  await expect(tip).toContainText(/Here are the [\d,]+ active AI companies/);
+  await nextStep('active AI companies in the UK and Ireland');
   await actionStep("click the 'Statistics' tab", 'tab-statistics');
   await nextStep("Look around at our 'Statistics'");
 

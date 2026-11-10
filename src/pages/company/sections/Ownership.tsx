@@ -1,3 +1,5 @@
+import { OwnershipStructure } from './OwnershipStructure';
+import { ProvenanceInfo } from '../provenance';
 import { Fragment, useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight, Search, Sheet, Triangle } from 'lucide-react';
 import type { SectionProps } from '../CompanyPage';
@@ -11,7 +13,8 @@ import { MultiSelect } from '../MultiSelect';
 const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 type Key = 'shareholder' | 'shares' | 'classPct' | 'totalPct' | 'worth';
 
-export function Ownership({ p }: SectionProps) {
+export function Ownership(props: SectionProps) {
+  const { p } = props;
   const filings = p.ownership.filings;
   const [idx, setIdx] = useState(filings.length - 1);
   const [changes, setChanges] = useState(false);
@@ -39,6 +42,7 @@ export function Ownership({ p }: SectionProps) {
   return (
     <>
       <SectionTitle>Ownership</SectionTitle>
+      <OwnershipStructure {...props} />
       <Card bodyClass="pb-[6px]" tourKey="ownership-strip">
         <div className="overflow-x-auto nb-scroll">
           <div className="flex min-w-max">
@@ -67,6 +71,7 @@ export function Ownership({ p }: SectionProps) {
       <div className="flex items-center justify-between my-[14px]">
         <Checkbox checked={changes} onChange={setChanges} disabled={!prev} className="text-[14px] text-ink">Show changes from last filing</Checkbox>
         <div className="flex items-center gap-[12px]">
+          <span className="inline-flex items-center text-[14px] text-text">Shareholdings<ProvenanceInfo dataset="ownership" label="Shareholdings" /></span>
           <span className="inline-flex items-center border border-border rounded-btn bg-white">
             <button disabled={idx === 0} onClick={() => setIdx(idx - 1)} aria-label="Previous filing" className="w-[28px] h-[30px] flex items-center justify-center text-primary disabled:text-[#C9C9C9]"><ChevronLeft size={16} /></button>
             <span className="px-[10px] text-[14px] text-ink tabular-nums">{formatDate(f.date)}</span>

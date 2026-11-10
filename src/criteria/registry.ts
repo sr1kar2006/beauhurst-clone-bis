@@ -8,6 +8,10 @@ import {
 import { slug } from '../data/taxonomies/industries';
 import { useCollections } from '../store/collectionsStore';
 import { DATA_TODAY } from '../data/generate';
+import { allCountries, countryName } from '../data/countries/iso3166';
+import { COUNTRY_PROFILES } from '../data/countries/profiles';
+import { PEOPLE_DEFS, PEOPLE_PICKER_TREE } from './people';
+import { RISK_DEFS, RISK_GROUPS, RISK_PEOPLE } from './risk';
 
 // ---------- operator sets
 const SET_OPS: Operator[] = [{ value: 'any', label: 'any' }, { value: 'all', label: 'all' }, { value: 'none', label: 'none' }];
@@ -79,7 +83,13 @@ function boolDef(id: string, label: string, get: (c: Company) => boolean, ops = 
 
 // Top-level
 const name = textDef('name', 'Name', (c) => c.name);
-const location = listDef('location', 'Location', REGIONS, (c) => c.headOffice);
+const regionOptions = (): Option[] => [
+  ...REGIONS.map((r) => ({ id: r, label: r, hint: 'United Kingdom' })),
+  ...COUNTRY_PROFILES.filter((p) => p.code !== 'GB').flatMap((p) => p.regions.map((r) => ({ id: r.name, label: r.name, hint: countryName(p.code) }))),
+];
+const location = listDef('location', 'Location', regionOptions, (c) => c.headOffice, { label: 'Region', phrase: 'Head office region' });
+const country = listDef('country', 'Country', () => allCountries().map((c) => ({ id: c.code, label: `${c.flag} ${c.name}` })), (c) => c.country, { phrase: 'Head office country', dividerAfter: 2 });
+const city = textDef('city', 'City', (c) => c.city, { phrase: 'Head office city' });
 const collections = listDef(
   'collections', 'Collections contained in include',
   () => useCollections.getState().collections.map((c) => ({ id: c.id, label: c.name, hint: `${c.companyIds.length}` })),
@@ -105,15 +115,19 @@ const signals = add({
 const tracking = listDef('tracking-status', 'Tracking status', TRACKING, (c) => c.trackingStatus);
 
 // Companies House
-const chId = textDef('ch-id', 'Companies House ID', (c) => c.companiesHouseId, {
+const chId = textDef('ch-id', 'Registry ID (e.g. Companies House number)', (c) => c.companiesHouseId, {
   operators: [{ value: 'contains', label: 'is' }, { value: 'does not contain', label: 'is not' }],
 });
 const chStatus = listDef('ch-status', 'Companies House status', CH_STATUSES, (c) => c.chStatus);
 
 // Company type and structure
-const companyType = listDef('company-type', 'Company type', COMPANY_TYPES, (c) => c.companyType);
-const legalForm = listDef('legal-form', 'Legal form', LEGAL_FORMS, (c) => c.legalForm);
+const allTypes = () => [...new Set([...COMPANY_TYPES, ...COUNTRY_PROFILES.flatMap((p) => p.legalForms.map((f) => f.type))])].map((t) => ({ id: t, label: t }));
+const allForms = () => [...new Set([...LEGAL_FORMS, ...COUNTRY_PROFILES.flatMap((p) => p.legalForms.map((f) => f.form))])].map((t) => ({ id: t, label: t }));
+const companyType = listDef('company-type', 'Company type', allTypes, (c) => c.companyType);
+const legalForm = listDef('legal-form', 'Legal form', allForms, (c) => c.legalForm);
 const isSub = boolDef('is-subsidiary', 'Is subsidiary', (c) => c.isSubsidiary);
+const listing = listDef('listing-status', 'Listed / Private', ['Listed', 'Private'], (c) => (c.listed ? 'Listed' : 'Private'), { phrase: 'Company is' });
+const exchange = listDef('stock-exchange', 'Stock exchange', () => [...new Set(COUNTRY_PROFILES.flatMap((p) => p.exchanges.map((e) => e.name)))].sort().map((e) => ({ id: e, label: e })), (c) => c.exchange ?? '');
 
 // What the company does
 const imports = boolDef('imports', 'Imports', (c) => c.imports, [{ value: 'yes', label: 'does' }, { value: 'no', label: 'does not' }], { phrase: 'Company imports goods' });
@@ -142,6 +156,7 @@ const bizDesc = textDef('business-description', 'Business description (from fili
 // People
 const age = (birth: number) => DATA_TODAY.getUTCFullYear() - birth;
 const directorName = textDef('director-name', 'Director name', (c) => c.directors.map((d) => d.name));
+const previousDirectors = textDef('previous-directors', 'Previous directors', (c) => c.directors.filter((d) => d.resigned).map((d) => d.name), { phrase: 'Previous director name' });
 const directorAge = rangeDef('director-age', 'Director age', () => undefined, 'years', {
   predicate: (c, _op, v) => currentDirectors(c).some((d) => inRange(age(d.birthYear), v)),
 });
@@ -185,27 +200,31 @@ const legacy = [
   ['legacy-growth-score', 'Growth score (legacy)'], ['legacy-region', 'Region (legacy)'], ['legacy-status', 'Archived status (legacy)'],
 ].map(([id, label]) => textDef(id, label, (c) => `${c.name} ${c.description}`, { legacy: true }));
 
-export const CRITERIA: Record<string, CriterionDef> = Object.fromEntries(defs.map((d) => [d.id, d]));
+export const CRITERIA: Record<string, CriterionDef> = Object.fromEntries([...defs, ...PEOPLE_DEFS, ...RISK_DEFS].map((d) => [d.id, d]));
 
 const C = (id: string): PickerNode => ({ kind: 'criterion', id });
 const G = (id: string, label: string, children: PickerNode[], legacyFlag = false): PickerNode => ({ kind: 'group', id, label, children, legacy: legacyFlag });
 
 export const PICKER_TREE: PickerNode[] = [
-  C(name), C(location), C(collections), C(stage), C(signals),
+  C(name), G('location', 'Location', [C(country), C(location), C(city)]), C(collections), C(stage), C(signals),
   G('tracking', 'Tracking', [C(tracking)]),
   G('companies-house', 'Companies House', [C(chId), C(chStatus)]),
-  G('company-type', 'Company type and structure', [C(companyType), C(legalForm), C(isSub)]),
+  G('company-type', 'Company type and structure', [C(listing), C(exchange), C(companyType), C(legalForm), C(isSub)]),
   G('what-the-company-does', 'What the company does', [
     G('commodity', 'Commodity trade activity', [C(imports), C(exportsD)]),
     C(targetMarkets), C(industries), C(sic), C(description), C(similar), C(bizDesc),
   ]),
-  G('people', 'People', [C(directorName), C(directorAge), C(directorGender), C(numDirectors), C(founderName), C(founderGender), C(shareholderName), C(numShareholders), C(employeeCount), C(seniorHires)]),
+  G('people', 'People', [C(directorName), ...RISK_PEOPLE.map(C), C(previousDirectors), C(directorAge), C(directorGender), C(numDirectors), C(founderName), C(founderGender), C(shareholderName), C(numShareholders), C(employeeCount), C(seniorHires)]),
   G('funding', 'Funding received', [C(totalRaised), C(latestFund), C(numFund), C(investor)]),
   G('events', 'Significant events', eventIds.map(C)),
   G('financials', 'Financials', [C(turnover), C(employees), C(netAssets)]),
+  ...RISK_GROUPS,
   G('online', 'Online presence', [C(hasWebsite), C(socialProfiles)]),
   G('legacy', 'Legacy criteria', legacy.map(C), true),
 ];
+
+/** Picker tree for the entity in the sentence header. */
+export const pickerTreeFor = (entity: string): PickerNode[] => (entity === 'people' ? PEOPLE_PICKER_TREE : PICKER_TREE);
 
 /** Is the criterion value "empty" (row ignored by the query)? */
 export function isEmptyValue(def: CriterionDef, v: CriterionValue): boolean {

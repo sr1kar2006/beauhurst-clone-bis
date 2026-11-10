@@ -129,6 +129,12 @@ export function lumenCompanies(): Company[] {
     exports: true,
     sicCodes: ['64191', '64999', '62012'],
     seniorHires: 4,
+    country: 'GB',
+    city: 'London',
+    currency: 'GBP',
+    listed: false,
+    registry: { name: 'Companies House', idLabel: 'Company number', id: '09412278' },
+    registryStatus: 'Active',
   };
 
   const group: Company = {
@@ -145,6 +151,8 @@ export function lumenCompanies(): Company[] {
     sicCodes: ['70100'],
     businessDescription: 'The principal activity of the company is that of a holding company.',
     companiesHouseId: '08870311',
+    registry: { name: 'Companies House', idLabel: 'Company number', id: '08870311' },
+    city: 'Manchester',
     stage: 'Established',
     fundraisings: [],
     fundraisingTotal: 0,

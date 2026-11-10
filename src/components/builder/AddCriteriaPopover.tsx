@@ -4,7 +4,7 @@ import { Popover } from '../ui/Popover';
 import { Checkbox } from '../ui/Checkbox';
 import { useIsOpen, useUi } from '../../store/uiStore';
 import { useQuery } from '../../store/queryStore';
-import { CRITERIA, PICKER_TREE } from '../../criteria/registry';
+import { CRITERIA, pickerTreeFor } from '../../criteria/registry';
 import type { PickerNode } from '../../criteria/types';
 import { bus } from '../../lib/eventBus';
 import { Highlight } from './icons';
@@ -46,7 +46,8 @@ export function AddCriteriaPopover({ anchor }: { anchor: HTMLElement | null }) {
     else { setTerm(''); setExpanded(new Set()); }
   }, [isOpen]);
 
-  const tree = useMemo(() => filterTree(PICKER_TREE, term, includeTracked), [term, includeTracked]);
+  const entity = useQuery((s) => s.entity);
+  const tree = useMemo(() => filterTree(pickerTreeFor(entity), term, includeTracked), [term, includeTracked, entity]);
   const searching = term.trim().length > 0;
   const allIds = useMemo(() => allGroupIds(tree), [tree]);
   const allExpanded = allIds.length > 0 && allIds.every((id) => expanded.has(id));

@@ -61,7 +61,7 @@ export interface Transaction {
 export interface Holding { shareholder: string; isPerson: boolean; shareClass: string; shares: number }
 export interface OwnershipFiling { date: string; holdings: Holding[] }
 
-export interface CorpNode { id: string; name: string; registeredName: string; country: string; consolidated: boolean; companyId?: string; current?: boolean; children: CorpNode[] }
+export interface CorpNode { id: string; name: string; registeredName: string; country: string; consolidated: boolean; companyId?: string; current?: boolean; /** % held by the parent node */ pct?: number; children: CorpNode[] }
 
 export interface HsItem { code: string; description: string; months: number; sub: { code: string; description: string; months: number }[] }
 export interface Commodities {
@@ -75,7 +75,7 @@ export type FinValue = number | string | boolean | null;
 export interface FinYear { yearEnd: string; values: Record<string, FinValue> }
 
 export interface Filing { id: string; date: string; category: string; code: string; lead: string; rest: string; bullets?: string[] }
-export interface NewsItem { id: string; headline: string; source: string; date: string; tagged: string[] }
+export interface NewsItem { id: string; headline: string; source: string; date: string; tagged: string[]; categories?: string[]; url?: string }
 export interface Patent { title: string; applicationNo: string; filed: string; status: string; jurisdiction: string }
 export interface Charge { created: string; delivered: string; status: string; entitled: string; description: string }
 

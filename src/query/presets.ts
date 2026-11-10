@@ -5,6 +5,7 @@ import { SIG } from '../data/taxonomies/signals';
 /** The tour's query: AI + Active + (Equity fundraising | 20% scaleup). */
 export const DEMO_QUERY: Query = {
   entity: 'companies',
+  countries: ['GB', 'IE'],
   combinator: 'all',
   criteria: [
     { uid: 'demo-1', defId: 'industries', op: 'any', value: [AI_ID] },

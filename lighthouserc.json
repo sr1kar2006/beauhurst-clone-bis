@@ -1,0 +1,20 @@
+{
+  "ci": {
+    "collect": {
+      "staticDistDir": "./dist",
+      "isSinglePageApplication": true,
+      "url": ["http://localhost/", "http://localhost/companies/lumen-bank", "http://localhost/data-sources"],
+      "numberOfRuns": 1
+    },
+    "assert": {
+      "assertions": {
+        "categories:accessibility": ["error", { "minScore": 0.95 }],
+        "categories:best-practices": ["warn", { "minScore": 0.9 }],
+        "categories:performance": ["warn", { "minScore": 0.6 }],
+        "largest-contentful-paint": ["warn", { "maxNumericValue": 4000 }],
+        "total-blocking-time": ["warn", { "maxNumericValue": 1500 }]
+      }
+    },
+    "upload": { "target": "temporary-public-storage" }
+  }
+}

@@ -1,12 +1,14 @@
+import { NotificationsBell } from '../../monitoring/pages';
 import { useMemo, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { getCompany } from '../../data/dataset';
-import { LUMEN_ID, profilePath, recentProfiles } from '../../lib/nav';
+import { LUMEN_ID, go, profilePath, recentProfiles } from '../../lib/nav';
+import { useAuth, useCurrentUser } from '../../auth/authStore';
+import { useAdminMenuItems } from '../../auth/guards';
 import { ChevronRight, Grip } from 'lucide-react';
-import { BRAND_NAME, USER_NAME } from '../../config';
+import { BRAND_NAME } from '../../config';
 import { Popover } from '../ui/Popover';
 import { useIsOpen, useUi } from '../../store/uiStore';
-import { GlobalSearch } from './GlobalSearch';
 
 export function BrandMark() {
   return (
@@ -21,13 +23,19 @@ export function BrandMark() {
 
 interface NavLinkItem { label: string; to?: string; hint?: string; logo?: string }
 
-const NAV: { label: string; items: NavLinkItem[] }[] = [
-  { label: `My ${BRAND_NAME}`, items: ['Dashboard', 'My collections', 'Saved searches', 'Alerts', 'Account settings'].map((label) => ({ label })) },
-  { label: 'Search', items: [{ label: 'Advanced search', to: '/' }, ...['Company search', 'Fundraising search', 'Investor search', 'People search'].map((label) => ({ label }))] },
-  { label: 'News & Reports', items: ['Latest news', 'Research reports', 'Webinars', 'Data methodology'].map((label) => ({ label })) },
+const USER_MENU: NavLinkItem[] = [
+  { label: 'Account', to: '/account' },
+  { label: 'Plan & allowances', to: '/plan' },
+  { label: 'Tender coverage', to: '/tender-coverage', hint: 'Demo' },
 ];
 
-function NavItem({ label, items, tourKey, width = 210, footer }: { label: string; items: NavLinkItem[]; tourKey?: string; width?: number; footer?: string }) {
+const NAV: { label: string; items: NavLinkItem[] }[] = [
+  { label: `My ${BRAND_NAME}`, items: [...['Dashboard', 'My collections', 'Saved searches'].map((label) => ({ label })), { label: 'Alerts', to: '/alerts' }, { label: 'Monitoring', to: '/monitoring' }, { label: 'Comparisons', to: '/comparisons' }, { label: 'Reports', to: '/reports' }, { label: 'Downloads', to: '/downloads' }, { label: 'Account settings', to: '/account' }, { label: 'Plan & allowances', to: '/plan' }] },
+  { label: 'Search', items: [{ label: 'Advanced search', to: '/' }, { label: 'People search', to: '/?find=people' }, ...['Fundraising search', 'Investor search'].map((label) => ({ label }))] },
+  { label: 'News & Reports', items: [{ label: 'Latest news', to: '/news' }, { label: 'My reports', to: '/reports' }, { label: 'New report', to: '/reports/new' }, { label: 'Webinars' }, { label: 'Data sources & methodology', to: '/data-sources' }] },
+];
+
+function NavItem({ label, items, tourKey, width = 210, footer, placement }: { label: string; items: NavLinkItem[]; tourKey?: string; width?: number; footer?: string; placement?: 'bottom-start' | 'bottom-end' }) {
   const [el, setEl] = useState<HTMLButtonElement | null>(null);
   const toggle = useUi((s) => s.toggle);
   const close = useUi((s) => s.close);
@@ -38,7 +46,7 @@ function NavItem({ label, items, tourKey, width = 210, footer }: { label: string
         {label}
         <ChevronRight size={13} className="text-muted mt-[1px]" />
       </button>
-      <Popover id={id} anchor={el} width={width} caret={false} className="py-1">
+      <Popover id={id} anchor={el} width={width} caret={false} className="py-1" placement={placement}>
         {items.map((it) =>
           it.to ? (
             <Link key={it.label + it.to} to={it.to} onClick={() => close(id)} className="flex items-center gap-[8px] px-4 py-2 text-[14px] text-ink hover:bg-page">
@@ -73,11 +81,36 @@ function CompanyProfileNav() {
   return <NavItem label="Company profile" items={items} tourKey="nav-company-profile" width={280} footer="Tip: click any company name in your search results to open its profile." />;
 }
 
-export function AppHeader() {
-  // On profile pages the global header scrolls away and the company header becomes sticky instead.
-  const onProfile = useLocation().pathname.startsWith('/companies/');
+function UserMenu() {
+  const user = useCurrentUser();
+  const admin = useAdminMenuItems();
+  const signOut = useAuth((s) => s.signOut);
+  const [el, setEl] = useState<HTMLButtonElement | null>(null);
+  const toggle = useUi((s) => s.toggle);
+  const close = useUi((s) => s.close);
+  if (!user) return <Link to="/sign-in" className="hover:text-primary">Sign in</Link>;
+  const id = 'nav:user';
+  const item = 'flex items-center gap-[8px] w-full text-left px-4 py-2 text-[14px] text-ink hover:bg-page';
   return (
-    <header data-app-header className={`bg-surface border-b border-border h-[52px] z-40 ${onProfile ? 'relative' : 'sticky top-0'}`}>
+    <>
+      <button ref={setEl} data-tour="user-menu" data-user-menu onClick={() => toggle(id)} className="flex items-center gap-[3px] hover:text-primary h-full">
+        {user.name.split(' ')[0]}<ChevronRight size={13} className="text-muted" />
+      </button>
+      <Popover id={id} anchor={el} width={240} caret={false} className="py-1" placement="bottom-end">
+        <div className="px-4 py-2 border-b border-border"><div className="text-[14px] font-semibold text-ink">{user.name}</div><div className="text-[12px] text-muted">{user.email} · {user.role}</div></div>
+        {[...USER_MENU, ...admin].map((it) => <Link key={it.to} to={it.to!} onClick={() => close(id)} className={item}>{it.label}{it.hint && <span className="ml-auto text-[12px] text-muted">{it.hint}</span>}</Link>)}
+        <div className="border-t border-border mt-1 pt-1">
+          <Link to="/sign-in" onClick={() => { close(id); signOut(); }} className={item} data-switch-user>Switch user</Link>
+          <button onClick={() => { close(id); signOut(); go('/sign-in'); }} className={item} data-sign-out>Sign out</button>
+        </div>
+      </Popover>
+    </>
+  );
+}
+
+export function AppHeader() {
+  return (
+    <header data-app-header className="bg-surface border-b border-border h-[52px]">
       <div className="h-full px-[20px] flex items-center">
         <Link to="/" className="mr-[34px]" aria-label={`${BRAND_NAME} home`}>
           <BrandMark />
@@ -86,16 +119,12 @@ export function AppHeader() {
           {NAV.map((n) => <NavItem key={n.label} {...n} />)}
           <CompanyProfileNav />
         </nav>
-        <div className="flex-1 flex justify-center px-6">
-          <GlobalSearch />
-        </div>
+        <div className="flex-1" />
         <div className="flex items-center gap-[24px] text-[15px] text-ink">
-          <a href="#" onClick={(e) => e.preventDefault()} className="hover:text-primary">Help</a>
-          <a href="#" onClick={(e) => e.preventDefault()} className="hover:text-primary">What&apos;s New</a>
-          <a href="#" onClick={(e) => e.preventDefault()} className="flex items-center gap-[3px] hover:text-primary">
-            {USER_NAME}
-            <ChevronRight size={13} className="text-muted" />
-          </a>
+          <Link to="/help" className="hover:text-primary">Help</Link>
+          <Link to="/whats-new" className="hover:text-primary">What&apos;s New</Link>
+          <NotificationsBell />
+          <UserMenu />
           <button aria-label="Apps" className="w-[34px] h-[34px] bg-[#EFEFEF] rounded-btn flex items-center justify-center text-ink hover:bg-[#e4e4e4]">
             <Grip size={18} />
           </button>

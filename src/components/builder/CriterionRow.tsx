@@ -80,6 +80,15 @@ export function CriterionRow({ c, index, combinator }: { c: Criterion; index: nu
             {pre}
             <input type="number" className={`${inputCls} w-[110px]`} placeholder="max" aria-label={`${def.label} maximum`} value={r.max ?? ''} onChange={(e) => update(c.uid, { value: { ...r, max: num(e.target.value) } })} />
             {def.unit === 'years' && <span>years</span>}
+            {def.yearOptions && (
+              <>
+                <span>in</span>
+                <select className={inputCls} aria-label={`${def.label} year`} value={r.year ?? ''} onChange={(e) => update(c.uid, { value: { ...r, year: e.target.value ? Number(e.target.value) : null } })}>
+                  <option value="">latest accounts</option>
+                  {def.yearOptions.map((y) => <option key={y} value={y}>{y}</option>)}
+                </select>
+              </>
+            )}
           </span>
         );
       }

@@ -1,0 +1,3 @@
+# Prototype for client demo: do not index.
+User-agent: *
+Disallow: /

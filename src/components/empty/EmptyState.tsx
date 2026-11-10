@@ -1,5 +1,7 @@
 import { Check, FlaskConical } from 'lucide-react';
-import { HEADLINE_TOTAL } from '../../config';
+import { useMemo } from 'react';
+import { getCompanies } from '../../data/dataset';
+import { countrySummary } from '../ui/CountrySelect';
 import { formatInt } from '../../lib/format';
 import { useQuery } from '../../store/queryStore';
 import { useResults } from '../../store/resultsStore';
@@ -11,8 +13,10 @@ export function EmptyState() {
   const runSearch = useResults((s) => s.runSearch);
   const loadQuery = useQuery((s) => s.loadQuery);
   const entity = useQuery((s) => s.entity);
+  const countries = useQuery((s) => s.countries);
+  const total = useMemo(() => getCompanies().filter((c) => !countries.length || countries.includes(c.country)).length, [countries]);
 
-  const viewAll = () => runSearch({ entity, combinator: 'all', criteria: [] });
+  const viewAll = () => runSearch({ entity, countries, combinator: 'all', criteria: [] });
   const loadDe = () => {
     loadQuery(DE_PRESET);
     runSearch(DE_PRESET);
@@ -25,7 +29,7 @@ export function EmptyState() {
         <p className="text-[15px] text-text mt-[4px]">
           or{' '}
           <button onClick={viewAll} className="text-primary underline underline-offset-2 hover:text-primary-hover">
-            view all {formatInt(HEADLINE_TOTAL)} companies
+            view all {formatInt(total)} companies in {countrySummary(countries)}
           </button>
         </p>
       </div>

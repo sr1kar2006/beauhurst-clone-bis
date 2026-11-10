@@ -126,7 +126,7 @@ const BUILD: TourStep[] = [
   },
   {
     id: 'results', target: 'results-summary', placement: 'top-start', mode: 'next',
-    text: () => `Here are the ${formatInt(resultCount())} active AI companies in the UK that have received equity fundraising and had a growth rate above 20%. Scroll down to take a look at the top 20 in alphabetical order.`,
+    text: () => `Here are the ${formatInt(resultCount())} active AI companies in the UK and Ireland that have received equity fundraising and had a growth rate above 20%. Scroll down to take a look at the top 20 in alphabetical order.`,
   },
   {
     id: 'stats-tab', target: 'tab-statistics', placement: 'bottom-start', mode: 'action', advanceOn: 'tab:statistics', beacon: true, beaconAt: 'center',

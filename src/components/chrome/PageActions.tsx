@@ -10,9 +10,9 @@ export function PageActions() {
   const clearResults = useResults((s) => s.clear);
   const startTour = useTour((s) => s.start);
 
-  const seg = 'inline-flex items-center gap-[6px] h-[30px] px-[13px] text-[15px] font-semibold text-primary bg-white hover:bg-primary-light';
+  const seg = 'whitespace-nowrap inline-flex items-center gap-[6px] h-[30px] px-[13px] text-[15px] font-semibold text-primary bg-white hover:bg-primary-light';
   return (
-    <div className="flex items-center gap-[18px]">
+    <div className="flex items-center gap-[18px] shrink-0">
       <button onClick={() => startTour(0)} className="inline-flex items-center gap-[5px] text-[15px] font-semibold text-primary hover:underline">
         <HelpCircle size={16} />
         Tour

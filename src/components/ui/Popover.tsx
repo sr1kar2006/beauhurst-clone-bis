@@ -26,6 +26,16 @@ export function Popover({ id, anchor, children, placement = 'bottom-start', widt
     middleware: [offset(caret ? 10 : 4), flip({ padding: 8 }), shift({ padding: 8 }), arrow({ element: arrowRef, padding: 14 })],
   });
 
+  // focus return: when the popover closes while focus was inside it (or lost to <body>), go back to the trigger
+  const wasOpen = useRef(false);
+  useEffect(() => {
+    if (isOpen) { wasOpen.current = true; return; }
+    if (!wasOpen.current) return;
+    wasOpen.current = false;
+    const active = document.activeElement;
+    if (!active || active === document.body) anchor?.focus?.();
+  }, [isOpen, anchor]);
+
   useEffect(() => {
     if (!isOpen) return;
     const onDown = (e: MouseEvent) => {

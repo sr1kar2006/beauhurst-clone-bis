@@ -3,7 +3,7 @@ import type { TreeNode } from '../data/taxonomies/signals';
 
 export type ValueType = 'tree-modal' | 'tree-popover' | 'list-popover' | 'text' | 'range' | 'date-range' | 'boolean';
 
-export interface Range { min?: number | null; max?: number | null }
+export interface Range { min?: number | null; max?: number | null; /** financial year (undefined = latest) */ year?: number | null }
 export interface DateRange { from?: string | null; to?: string | null }
 export type CriterionValue = string[] | string | Range | DateRange | null;
 
@@ -26,6 +26,10 @@ export interface CriterionDef {
   /** £ for money ranges */
   unit?: '£' | '' | 'years';
   options?: () => Option[];
+  /** draw a divider after this many options (country lists: UK, Ireland | A to Z) */
+  dividerAfter?: number;
+  /** range criteria with a 'latest / specific year' selector */
+  yearOptions?: number[];
   tree?: TreeNode[];
   predicate: (c: Company, op: string, value: CriterionValue) => boolean;
 }
@@ -38,7 +42,9 @@ export interface Criterion {
 }
 
 export interface Query {
-  entity: 'companies' | 'de' | 'funds';
+  entity: 'companies' | 'de' | 'funds' | 'people';
+  /** ISO-2 country pre-filter from the sentence header ("in [United Kingdom, Ireland]"); empty or missing = all countries */
+  countries?: string[];
   combinator: 'all' | 'any';
   criteria: Criterion[];
 }

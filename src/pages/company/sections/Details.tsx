@@ -1,3 +1,5 @@
+import { Flag } from '../../../components/ui/Flag';
+import { countryName } from '../../../data/countries/iso3166';
 import { Eye, Search } from 'lucide-react';
 import type { SectionProps } from '../CompanyPage';
 import { INDUSTRY_BY_ID } from '../../../data/taxonomies/industries';
@@ -52,8 +54,12 @@ export function Details({ c, p }: SectionProps) {
             <KeyValueTable rows={[
               ['Trading name', p.tradingName],
               ['Registered name', p.registeredName],
-              ['Companies House ID', <a key="ch" href="#" onClick={(e) => e.preventDefault()} className="text-primary hover:underline">{c.companiesHouseId}</a>],
-              ['Incorporation date (Companies House)', formatDate(p.incorporationDate)],
+              ['Country of registration', <span key="cr" className="inline-flex items-center gap-[5px]"><Flag code={c.country} />{countryName(c.country)}</span>],
+              ['Registry', c.registry.name],
+              [c.registry.idLabel, <a key="ch" href="#" onClick={(e) => e.preventDefault()} className="text-primary hover:underline" data-registry-id>{c.registry.id}</a>],
+              [`Incorporation date (${c.registry.name})`, formatDate(p.incorporationDate)],
+              ['Listing', c.listed ? <span key="l">Listed on {c.exchange} <span className="ml-[4px] px-[5px] rounded-[3px] bg-chip-blue text-badge-blue-text text-[12px] font-semibold">{c.ticker}</span></span> : 'Private company'],
+              ['Reporting currency', c.currency === 'GBP' ? 'GBP (£)' : `${c.currency}. Values are shown in ${c.currency} with a GBP equivalent at sample rates.`],
               [<span key="a" className="inline-flex items-center gap-[4px]">Alternative establishment date <Tip text="The date the business started trading, if earlier than incorporation."><span className="text-muted">ⓘ</span></Tip></span>, formatDate(p.altEstablishmentDate)],
               ['Other trading names', p.otherTradingNames.join(', ') || '—'],
               ['Legal form', p.legalForm],
@@ -87,7 +93,7 @@ export function Details({ c, p }: SectionProps) {
               ['Tracking status', <span key="t" className="inline-flex items-center gap-[5px]"><Eye size={15} className="text-bar-green" />{c.trackingStatus}</span>],
               ['Stage of evolution', <div key="s"><span className="inline-flex items-center gap-[5px] font-medium">{c.stage} <Search size={13} className="text-muted" /></span><div className="text-[13px] text-muted mt-[2px]">{STAGE_EXPLAIN[c.stage]}</div></div>],
               ['Actively hiring', p.activelyHiring ? <span key="h">Yes (<a href="#" onClick={(e) => e.preventDefault()} className="text-primary hover:underline">See open job roles</a>)</span> : 'No'],
-              ['Companies House status', c.chStatus],
+              [c.country === 'GB' ? 'Companies House status' : `Register status (${c.registry.name})`, c.country === 'GB' ? c.chStatus : `${c.registryStatus} (${c.chStatus})`],
             ]} />
           </Card>
           <Card title="Contact">

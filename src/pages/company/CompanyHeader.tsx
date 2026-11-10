@@ -1,4 +1,12 @@
+import { MonitorButton } from '../../monitoring/MonitorButton';
+import { requestExport } from '../../export/requestExport';
+import { profileSpec } from '../../export/specs';
 import { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
+import { publicUrl } from '../../config';
+import { Flag } from '../../components/ui/Flag';
+import { CompareToggle } from '../../components/compare/CompareTray';
+import { countryName } from '../../data/countries/iso3166';
 import { AlertTriangle, Check, FileText, Link2, ListPlus, Sheet, X } from 'lucide-react';
 import type { Company } from '../../data/types';
 import type { CompanyProfile } from '../../data/profile/types';
@@ -8,6 +16,7 @@ import { Button } from '../../components/ui/Button';
 import { Checkbox } from '../../components/ui/Checkbox';
 import { useIsOpen, useUi } from '../../store/uiStore';
 import { useCollections } from '../../store/collectionsStore';
+import { useIssues } from '../../store/issuesStore';
 import { downloadBlob, toCsv } from '../../lib/download';
 import { formatDate, formatInt, formatMoney, joinAnd } from '../../lib/format';
 import { industryLabels } from '../../components/results/cells';
@@ -21,7 +30,7 @@ export function CompanyHeader({ c, p, onPrint }: { c: Company; p: CompanyProfile
   const exportCsv = () => {
     const last = p.financials[p.financials.length - 1]?.values ?? {};
     const rows: (string | number)[][] = [
-      ['Name', c.name], ['Registered name', p.registeredName], ['Companies House ID', c.companiesHouseId], ['Status', c.chStatus],
+      ['Name', c.name], ['Registered name', p.registeredName], ['Country', countryName(c.country)], [c.registry.idLabel, c.registry.id], ['Registry', c.registry.name], ['Status', c.chStatus], ['Listed', c.listed ? `${c.exchange} ${c.ticker}` : 'Private'],
       ['Incorporation date', formatDate(p.incorporationDate)], ['Stage of evolution', c.stage], ['Head office', p.addresses.headOffice.join(', ')],
       ['Website', c.website ?? ''], ['Industries', joinAnd(industryLabels(c))], ['Description', c.description],
       ['Total raised (£)', c.fundraisingTotal], ['Turnover (£)', (last.turnover as number) ?? ''], ['Employees', c.employees ?? ''],
@@ -31,14 +40,19 @@ export function CompanyHeader({ c, p, onPrint }: { c: Company; p: CompanyProfile
   };
 
   return (
-    <div className="sticky top-0 z-30 bg-surface border-b border-border h-[56px] no-print-border" data-company-header>
+    <div className="sticky top-[84px] z-30 bg-surface border-b border-border h-[56px] no-print-border" data-company-header>
       <div className="max-w-[1440px] mx-auto h-full px-[20px] flex items-center gap-[12px]">
         <img src={c.logo} alt="" className="w-[36px] h-[36px] rounded-[3px] border border-border" />
         <h1 className="text-[22px] font-medium text-ink truncate">{c.name}</h1>
+        <Flag code={c.country} className="text-[20px]" />
+        {c.listed && <span className="px-[6px] py-[1px] rounded-[3px] bg-chip-blue text-badge-blue-text text-[12px] font-semibold whitespace-nowrap">{c.ticker}</span>}
         <div className="ml-auto flex items-center gap-[10px] no-print">
+          <MonitorButton target={{ kind: 'company', id: c.id, label: c.name }} />
+          <CompareToggle id={c.id} />
           <CollectionsButton companyId={c.id} />
           <div className="inline-flex border border-primary rounded-btn overflow-hidden divide-x divide-primary">
-            <button onClick={onPrint} className="inline-flex items-center gap-[6px] h-[30px] px-[12px] text-[15px] font-semibold text-primary bg-white hover:bg-primary-light"><FileText size={15} />PDF</button>
+            <button onClick={() => requestExport(profileSpec(c, p), 'pdf', `${c.id}-profile`)} data-profile-export="pdf" className="inline-flex items-center gap-[6px] h-[30px] px-[12px] text-[15px] font-semibold text-primary bg-white hover:bg-primary-light"><FileText size={15} />PDF</button>
+            <button onClick={() => requestExport(profileSpec(c, p), 'xlsx', `${c.id}-profile`)} data-profile-export="xlsx" className="inline-flex items-center gap-[6px] h-[30px] px-[12px] text-[15px] font-semibold text-primary bg-white hover:bg-primary-light"><Sheet size={15} />Excel</button>
             <button onClick={exportCsv} className="inline-flex items-center gap-[6px] h-[30px] px-[12px] text-[15px] font-semibold text-primary bg-white hover:bg-primary-light"><Sheet size={15} />CSV</button>
           </div>
           <Button onClick={() => open('share-modal', 'modal')}><Link2 size={15} />Share</Button>
@@ -48,7 +62,7 @@ export function CompanyHeader({ c, p, onPrint }: { c: Company; p: CompanyProfile
         </div>
       </div>
       <ShareModal />
-      <ReportModal companyName={c.name} />
+      <ReportModal companyName={c.name} companyId={c.id} />
     </div>
   );
 }
@@ -98,7 +112,8 @@ function ShareModal() {
   const isOpen = useIsOpen('share-modal');
   const close = useUi((s) => s.close);
   const [copied, setCopied] = useState(false);
-  const url = typeof window !== 'undefined' ? window.location.href : '';
+  const { pathname } = useLocation();
+  const url = publicUrl(pathname);
   useEffect(() => { if (!isOpen) setCopied(false); }, [isOpen]);
   const copy = async () => {
     try { await navigator.clipboard.writeText(url); } catch { /* blocked clipboard: still confirm */ }
@@ -122,14 +137,20 @@ function ShareModal() {
   );
 }
 
-function ReportModal({ companyName }: { companyName: string }) {
+function ReportModal({ companyName, companyId }: { companyName: string; companyId: string }) {
   const close = useUi((s) => s.close);
   const show = useToast((s) => s.show);
+  const report = useIssues((s) => s.report);
   const [text, setText] = useState('');
   const [section, setSection] = useState('summary');
   return (
     <Modal id="report-modal" width={500} label="Report an issue">
-      <form onSubmit={(e) => { e.preventDefault(); close('report-modal'); setText(''); show(`Thanks: we'll review the issue you reported on ${companyName}.`); }}>
+      <form onSubmit={(e) => {
+        e.preventDefault();
+        const issue = report({ companyId, companyName, section: SECTIONS.find((x) => x.id === section)?.label ?? section, description: text });
+        close('report-modal'); setText('');
+        show(`Thanks: we'll review the issue you reported on ${companyName} (reference ${issue.id.toUpperCase()}). Track it under Data sources → Corrections.`);
+      }}>
         <div className="flex items-center justify-between px-[22px] py-[16px] border-b border-border">
           <h2 className="text-[18px] text-ink font-semibold">Report an issue</h2>
           <button type="button" onClick={() => close('report-modal')} aria-label="Close" className="text-text hover:text-ink"><X size={20} /></button>

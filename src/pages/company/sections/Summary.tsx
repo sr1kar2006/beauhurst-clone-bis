@@ -1,3 +1,5 @@
+import { Flag } from '../../../components/ui/Flag';
+import { countryName } from '../../../data/countries/iso3166';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Eye, Facebook, Info, Instagram, Link2, Linkedin, Plus, Tag, Twitter, Users } from 'lucide-react';
@@ -24,14 +26,14 @@ export function Summary({ c, p }: SectionProps) {
       <div className="space-y-[16px]">
         <Briefing c={c} />
         <SignalsCard c={c} />
-        <Card title="Timeline" seeAll={`${base}/timeline`}>
+        <Card title="Timeline" source="filings" seeAll={`${base}/timeline`}>
           <MiniTimeline p={p} compact onSelect={() => go(`${base}/timeline`)} />
         </Card>
         <TransactionsSummary p={p} seeAll={`${base}/transactions`} />
         <DetailsSummary c={c} p={p} />
         <FinancialSummary p={p} />
         <KeyPeopleCard c={c} p={p} compact seeAll={`${base}/people`} />
-        <Card title="Company news" seeAll={`${base}/news`}>
+        <Card title="Company news" source="news" seeAll={`${base}/news`}>
           <p className="text-[14px] text-muted mb-[6px]">Showing recent {Math.min(3, p.news.length)} of {formatInt(p.news.length)} news entries</p>
           {p.news.slice(0, 3).map((n) => (
             <div key={n.id} className="py-[10px] border-b border-card-border last:border-0">
@@ -81,7 +83,7 @@ function Briefing({ c }: { c: Company }) {
         <div className="flex-1 min-w-0 space-y-[10px]">
           <div className="flex flex-wrap items-center gap-x-[8px] gap-y-[4px] text-[14px] text-ink">
             <span className="inline-flex items-center gap-[5px]"><Eye size={15} className="text-bar-green" />{c.trackingStatus}</span><span className="text-muted">•</span>
-            <span className="inline-flex items-center gap-[5px]"><FlagGB />{c.headOffice}, United Kingdom</span><span className="text-muted">•</span>
+            <span className="inline-flex items-center gap-[5px]"><Flag code={c.country} />{c.city !== c.headOffice ? `${c.city}, ` : ''}{c.headOffice}, {countryName(c.country)}</span><span className="text-muted">•</span>
             <span>{c.stage} stage</span>
             {c.website && <><span className="text-muted">•</span><a href={c.website} target="_blank" rel="noreferrer" className="inline-flex items-center gap-[4px] text-primary hover:underline"><Link2 size={14} />Website</a></>}
           </div>
@@ -167,7 +169,7 @@ export function SimilarCard({ id }: { id: string }) {
         <img src={s.logo} alt="" className="w-[40px] h-[40px] border border-border rounded-[3px]" />
         <Link to={profilePath(s.id)} className="text-[18px] font-medium text-primary hover:underline leading-tight">{s.name}</Link>
       </div>
-      <div className="flex items-center gap-[6px] text-[13px] text-text mt-[8px]"><FlagGB />United Kingdom</div>
+      <div className="flex items-center gap-[6px] text-[13px] text-text mt-[8px]"><Flag code={s.country} />{countryName(s.country)}</div>
       <p className="text-[14px] text-text mt-[8px] line-clamp-3">{s.description}</p>
       {sig && <span className="mt-[8px] self-start"><Chip tone="purple">{SIGNAL_LABEL.get(sig)}</Chip></span>}
       <div className="mt-auto pt-[12px] space-y-[8px]">

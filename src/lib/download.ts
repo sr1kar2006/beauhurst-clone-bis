@@ -12,7 +12,21 @@ export function downloadUrl(url: string, filename: string) {
   a.click();
   a.remove();
 }
-export function toCsv(headers: string[], rows: (string | number | undefined | null)[][]): string {
+import { PROTOTYPE_NOTICE } from '../config/app';
+import { load, save } from './storage';
+
+/** Export setting: put the prototype notice as a first comment line in CSV files (default on). */
+const CSV_NOTICE_KEY = 'nb.export.csvNotice';
+export const csvNoticeEnabled = () => load<boolean>(CSV_NOTICE_KEY, true);
+export const setCsvNotice = (on: boolean) => save(CSV_NOTICE_KEY, on);
+
+export function toCsv(headers: string[], rows: (string | number | undefined | null)[][], opts: { notice?: boolean } = {}): string {
+  const body = toCsvBody(headers, rows);
+  return (opts.notice ?? csvNoticeEnabled()) ? `# ${PROTOTYPE_NOTICE} Exported ${new Date().toISOString().slice(0, 10)}.
+${body}` : body;
+}
+
+function toCsvBody(headers: string[], rows: (string | number | undefined | null)[][]): string {
   const esc = (v: unknown) => {
     const s = v == null ? '' : String(v);
     return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;

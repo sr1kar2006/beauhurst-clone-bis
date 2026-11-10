@@ -1,3 +1,12 @@
+import { PeopleResults } from './PeopleResults';
+import type { Person } from '../../data/persons';
+import { ExportMenu } from '../../export/ExportMenu';
+import { resultsSpec } from '../../export/specs';
+import { useAnalysis } from '../../analysis/analysisStore';
+import { describeQuery } from '../../query/describe';
+import { Link } from 'react-router-dom';
+import { Columns3 } from 'lucide-react';
+import { useCompare, comparePath } from '../../store/compareStore';
 import { lazy, Suspense, useState } from 'react';
 import { Download, ListPlus } from 'lucide-react';
 import { useResults, ALL_COLUMNS } from '../../store/resultsStore';
@@ -17,6 +26,7 @@ import { ActivityFeed } from '../feeds/ActivityFeed';
 import { NewsList } from '../feeds/NewsList';
 
 // ECharts and Leaflet are heavy; load them only when their tab is opened.
+const AnalysisGrid = lazy(() => import('../../analysis/AnalysisGrid').then((m) => ({ default: m.AnalysisGrid })));
 const StatsDashboard = lazy(() => import('../stats/StatsDashboard').then((m) => ({ default: m.StatsDashboard })));
 const ResultsMap = lazy(() => import('../feeds/ResultsMap').then((m) => ({ default: m.ResultsMap })));
 const Loading = () => <div className="py-[60px] text-center text-muted">Loading…</div>;
@@ -41,6 +51,7 @@ export function ResultsSection() {
   const entity = useResults((s) => s.ranQuery?.entity ?? 'companies');
   const results = useResultSet();
 
+  if (entity === 'people') return <div className="max-w-wide mx-auto px-5 mt-[34px]" data-tour="results-area"><PeopleResults rows={results as unknown as Person[]} /></div>;
   return (
     <div className="max-w-wide mx-auto px-5 mt-[34px]" data-tour="results-area">
       <div className="flex items-end gap-[4px] border-b border-tab-active" role="tablist">
@@ -70,6 +81,28 @@ export function ResultsSection() {
   );
 }
 
+function ViewToggle() {
+  const view = useAnalysis((s) => s.view);
+  const setView = useAnalysis((s) => s.setView);
+  return (
+    <div role="group" aria-label="Results view" className="inline-flex border border-primary rounded-btn overflow-hidden divide-x divide-primary" data-tour="results-view">
+      {([['list', 'List'], ['analyse', 'Analyse']] as const).map(([k, l]) => (
+        <button key={k} aria-pressed={view === k} data-results-view={k} onClick={() => setView(k)} className={`h-[30px] px-[14px] text-[14px] font-semibold ${view === k ? 'bg-primary text-white' : 'bg-white text-primary hover:bg-primary-light'}`}>{l}</button>
+      ))}
+    </div>
+  );
+}
+
+function CompareButton() {
+  const ids = useCompare((s) => s.ids);
+  return (
+    <Link to={comparePath(ids)} aria-disabled={!ids.length} data-compare-button onClick={(e) => { if (!ids.length) e.preventDefault(); }}
+      className={`inline-flex items-center gap-[6px] h-[30px] px-[12px] border border-primary rounded-btn text-[15px] font-semibold ${ids.length ? 'bg-primary text-white hover:bg-primary-hover' : 'bg-white text-primary opacity-60 cursor-default'}`}>
+      <Columns3 size={15} />Compare ({ids.length})
+    </Link>
+  );
+}
+
 function ResultsActions({ all }: { all: ReturnType<typeof useSortedResults> }) {
   const open = useUi((s) => s.open);
   const setTarget = useResults((s) => s.setCollectionTarget);
@@ -83,6 +116,9 @@ function ResultsActions({ all }: { all: ReturnType<typeof useSortedResults> }) {
   };
   return (
     <div className="flex items-center gap-[10px]" data-tour="result-actions">
+      <CompareButton />
+      <ExportMenu label={`Export all ${all.length.toLocaleString('en-GB')} results`} tourKey="export-all" filename="search-results"
+        build={() => resultsSpec(all, ['name', 'country', 'region', 'industry', 'stage', 'status', 'listed', 'registryId', 'founded', 'turnover', 'employees', 'fundraisingTotal', 'latestFundraising', 'website'], describeQuery(useResults.getState().ranQuery))} />
       <Button onClick={exportCsv}><Download size={15} />Export results to a CSV</Button>
       <Button onClick={() => { setTarget(all.map((c) => c.id)); open('collection-modal', 'modal'); }}><ListPlus size={16} />Add to collection</Button>
     </div>
@@ -96,6 +132,8 @@ function ResultsTab() {
   const entity = useResults((s) => s.ranQuery?.entity ?? 'companies');
   const [showMore, setShowMore] = useState(false);
   const rows = paginate(all, page, size);
+  const view = useAnalysis((s) => s.view);
+  const ranQuery = useResults((s) => s.ranQuery);
 
   return (
     <>
@@ -119,15 +157,23 @@ function ResultsTab() {
         </div>
         <ResultsActions all={all} />
       </div>
-      <div className="flex items-center justify-between mb-[12px]">
-        <ColumnEditor />
-        <Pagination total={all.length} />
+      <div className="flex items-center gap-[12px] mb-[12px]">
+        <ViewToggle />
+        {view === 'list' && <ColumnEditor />}
+        <div className="flex-1" />
+        {view === 'list' && <Pagination total={all.length} />}
       </div>
-      <ResultsTable rows={rows} />
-      <div className="flex items-center justify-between mt-[14px]">
-        <ResultsActions all={all} />
-        <Pagination total={all.length} />
-      </div>
+      {view === 'analyse' ? (
+        <Suspense fallback={<Loading />}><AnalysisGrid rows={all} filtersUsed={describeQuery(ranQuery)} /></Suspense>
+      ) : (
+        <>
+          <ResultsTable rows={rows} />
+          <div className="flex items-center justify-between mt-[14px]">
+            <ResultsActions all={all} />
+            <Pagination total={all.length} />
+          </div>
+        </>
+      )}
     </>
   );
 }

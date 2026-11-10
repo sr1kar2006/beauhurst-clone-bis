@@ -7,9 +7,12 @@ import type { Company } from '../../data/types';
 import { bus } from '../../lib/eventBus';
 import { profilePath, pushRecentProfile } from '../../lib/nav';
 import { Breadcrumb } from '../../components/chrome/Breadcrumb';
+import { GlobalSearch } from '../../components/chrome/GlobalSearch';
 import { CompanyHeader } from './CompanyHeader';
 import { SECTIONS, SectionId, isSection, sectionEnabled } from './sections';
 import { Toasts } from './ui';
+import { setTitle } from '../../lib/title';
+import { ProvenanceProvider } from './provenance';
 import { Summary } from './sections/Summary';
 import { Details } from './sections/Details';
 import { Timeline } from './sections/Timeline';
@@ -45,8 +48,8 @@ export default function CompanyPage() {
   // scroll to top + tell the tour on every section change
   useEffect(() => {
     window.scrollTo(0, 0);
-    if (c) { bus.emit(`section:${current}`); pushRecentProfile(c.id); document.title = `${c.name} | ${SECTIONS.find((s) => s.id === current)!.label}`; }
-    return () => { document.title = 'Advanced search'; };
+    if (c) { bus.emit(`section:${current}`); pushRecentProfile(c.id); setTitle(`${c.name} | ${SECTIONS.find((s) => s.id === current)!.label}`); }
+    return () => setTitle("Advanced search");
   }, [c, current]);
 
   // PDF: render every section stacked, print, then restore
@@ -72,17 +75,21 @@ export default function CompanyPage() {
     <div className="pb-[30px]" data-profile={c.id}>
       <CompanyHeader c={c} p={p} onPrint={() => setPrinting(true)} />
       <div className="max-w-[1440px] mx-auto px-[20px] no-print">
-        <Breadcrumb items={[{ label: 'Home', to: '/' }, { label: 'Companies', to: '/' }, { label: c.name, to: profilePath(c.id) }, { label: SECTIONS.find((s) => s.id === current)!.label }]} />
+        <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-6">
+          <Breadcrumb items={[{ label: 'Home', to: '/' }, { label: 'Companies', to: '/' }, { label: c.name, to: profilePath(c.id) }, { label: SECTIONS.find((s) => s.id === current)!.label }]} />
+          <GlobalSearch />
+          <div />
+        </div>
       </div>
       <div className="max-w-[1440px] mx-auto px-[20px] pt-[16px] flex gap-[24px] items-start">
         <SectionNav c={c} p={p} current={current} />
         <div className="flex-1 min-w-0" data-section={current}>
           {printing ? (
             <div className="space-y-[30px]">
-              {SECTIONS.filter((s) => sectionEnabled(s.id, p)).map((s) => { const V = VIEWS[s.id]; return <div key={s.id} className="print-section"><V c={c} p={p} /></div>; })}
+              {SECTIONS.filter((s) => sectionEnabled(s.id, p)).map((s) => { const V = VIEWS[s.id]; return <div key={s.id} className="print-section"><ProvenanceProvider value={{ c, p, section: s.id }}><V c={c} p={p} /></ProvenanceProvider></div>; })}
             </div>
           ) : (
-            <View c={c} p={p} />
+            <ProvenanceProvider value={{ c, p, section: current }}><View c={c} p={p} /></ProvenanceProvider>
           )}
         </div>
       </div>
@@ -93,7 +100,7 @@ export default function CompanyPage() {
 
 function SectionNav({ c, p, current }: { c: Company; p: CompanyProfile; current: SectionId }) {
   return (
-    <nav aria-label="Profile sections" className="w-[195px] shrink-0 sticky top-[72px] self-start bg-surface border border-card-border rounded-card py-[8px] px-[6px] no-print" data-section-nav>
+    <nav aria-label="Profile sections" className="w-[195px] shrink-0 sticky top-[156px] self-start bg-surface border border-card-border rounded-card py-[8px] px-[6px] no-print" data-section-nav>
       <ul>
         {SECTIONS.map((s) => {
           const enabled = sectionEnabled(s.id, p);

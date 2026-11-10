@@ -42,12 +42,13 @@ test('builder: all/any, remove, empty values, entity switch', async ({ page }) =
   await page.getByLabel('Match all or any').selectOption('all');
   // an empty row is ignored by the query
   await page.click(t('add-criteria'));
+  await page.click(t('group-location'));
   await page.click(t('criterion-location'));
   await page.keyboard.press('Escape');
   await expect(page.locator(t('value-location'))).toHaveText('None selected');
   await page.click(t('search-button'));
-  await expect(page.locator(t('results-summary'))).toContainText(/1,\d{3} companies/);
-  await page.getByRole('button', { name: 'Remove Location' }).click();
+  await expect(page.locator(t('results-summary'))).toContainText(/[\d,]+ companies/);
+  await page.getByRole('button', { name: 'Remove Region' }).click();
   // entity switch relabels the buttons
   await page.click(t('entity-select'));
   await page.getByRole('button', { name: /German legal entities/ }).click();
@@ -95,7 +96,7 @@ test('results: sort, paginate, page size, columns, collections, CSV', async ({ p
   await page.getByText('Create a new collection').click();
   await page.getByLabel('Collection name').fill('Demo AI list');
   await page.getByRole('dialog', { name: 'Add to collection' }).getByRole('button', { name: 'Save', exact: true }).click();
-  await expect(page.getByRole('dialog', { name: 'Add to collection' })).toContainText(/Added 1,\d{3} companies to Demo AI list/);
+  await expect(page.getByRole('dialog', { name: 'Add to collection' })).toContainText(/Added [\d,]+ companies to Demo AI list/);
   await page.getByRole('button', { name: 'Done' }).click();
   // the new collection is now usable as a criterion
   await page.click(t('add-criteria'));
@@ -130,13 +131,13 @@ test('save, open, reset and URL state', async ({ page }) => {
   await expect(page.getByRole('dialog', { name: 'Open search' })).toContainText('3 criteria');
   await page.getByRole('button', { name: /^Active AI scaleups Saved/ }).click();
   await expect(page.locator(t('value-signals'))).toHaveText('2 selected');
-  await expect(page.locator(t('results-summary'))).toContainText(/1,\d{3} companies/);
+  await expect(page.locator(t('results-summary'))).toContainText(/[\d,]+ companies/);
 
   // a shared link restores the builder and its results
   const p2 = await page.context().newPage();
   await p2.goto(url);
   await expect(p2.locator(t('value-industries'))).toHaveText('Artificial Intelligence');
-  await expect(p2.locator(t('results-summary'))).toContainText(/1,\d{3} companies/);
+  await expect(p2.locator(t('results-summary'))).toContainText(/[\d,]+ companies/);
   await expect(p2.locator('[data-tour-tooltip]')).toHaveCount(0);
   expect(errors).toEqual([]);
 });

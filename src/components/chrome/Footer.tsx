@@ -1,6 +1,8 @@
-import { BRAND_NAME, COPYRIGHT_FROM, COPYRIGHT_TO } from '../../config';
+import { Link } from 'react-router-dom';
+import { BRAND_NAME, COPYRIGHT_FROM, COPYRIGHT_TO, PROTOTYPE_NOTICE } from '../../config';
 
-const LINKS = ['Cookies', 'Terms & Conditions', 'Privacy Policy', 'Jobs', 'About Us'];
+const LINKS = ['Cookies', 'Terms & Conditions', 'Privacy Policy'];
+const ROUTES: [string, string][] = [['Accessibility', '/accessibility'], ['Support', '/support'], ['Service status', '/status'], ['Service & governance', '/governance'], ['Data sources', '/data-sources']];
 
 export function Footer() {
   return (
@@ -9,7 +11,9 @@ export function Footer() {
         {LINKS.map((l) => (
           <a key={l} href="#" onClick={(e) => e.preventDefault()} className="hover:text-primary hover:underline">{l}</a>
         ))}
+        {ROUTES.map(([l, to]) => <Link key={to} to={to} className="hover:text-primary hover:underline">{l}</Link>)}
         <span className="text-muted">© Copyright {COPYRIGHT_FROM}-{COPYRIGHT_TO} {BRAND_NAME}.</span>
+        <span className="basis-full text-[13px] text-text font-semibold" data-footer-notice>{PROTOTYPE_NOTICE}</span>
       </div>
     </footer>
   );

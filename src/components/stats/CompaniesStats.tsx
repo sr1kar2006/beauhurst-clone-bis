@@ -13,6 +13,7 @@ import { ChartCard, FaqLink } from './ChartCard';
 import { HBarList, KpiPill, LegendList, InlineSelect, donutOption, hbarOption } from './primitives';
 import { SectionTitle } from './StatsDashboard';
 import { Button } from '../ui/Button';
+import { countryByCode } from '../../data/countries/iso3166';
 
 const FONT = 'Public Sans';
 const axisText = { fontFamily: FONT, color: '#595959', fontSize: 12 };
@@ -39,6 +40,8 @@ export function CompaniesStats({ results }: { results: Company[] }) {
         <FoundationsCard results={results} />
         <ActiveCard results={results} />
       </div>
+
+      <div className="mt-[18px]"><CountryCard results={results} /></div>
 
       <SectionTitle>Classification</SectionTitle>
       <div className="grid grid-cols-2 gap-[18px] items-start">
@@ -274,6 +277,28 @@ function TopTurnoverCard({ results }: { results: Company[] }) {
       footnote={`Based on ${formatInt(withT)} companies with a reported turnover.`}
     >
       <HBarList variant="stacked" color={C.mint} items={top.map((t) => ({ key: t.company.id, label: <CompanyLink c={t.company} />, value: t.value, text: formatMoney(t.value) }))} />
+    </ChartCard>
+  );
+}
+
+// ---------------- Countries (part 3: international coverage)
+function CountryCard({ results }: { results: Company[] }) {
+  const rows = useMemo(() => {
+    const m = new Map<string, number>();
+    results.forEach((c) => m.set(c.country, (m.get(c.country) ?? 0) + 1));
+    return [...m.entries()].sort((a, b) => b[1] - a[1]);
+  }, [results]);
+  const top = rows.slice(0, 15);
+  const option = hbarOption('Companies by country', top.map(([k]) => countryByCode(k).name), top.map(([, v]) => v), C.blue);
+  return (
+    <ChartCard
+      title="Companies by country"
+      tourKey="stats-by-country"
+      option={option}
+      csv={{ headers: ['Country', 'ISO code', 'Companies'], rows: rows.map(([k, v]) => [countryByCode(k).name, k, v]) }}
+      footnote={`${rows.length} countries in these results${rows.length > 15 ? '; the 15 largest are shown, the CSV has all of them' : ''}.`}
+    >
+      <HBarList items={top.map(([k, v]) => ({ key: k, label: <span className="inline-flex items-center gap-[6px]"><span aria-hidden>{countryByCode(k).flag}</span>{countryByCode(k).name}</span>, value: v, text: formatInt(v) }))} />
     </ChartCard>
   );
 }
